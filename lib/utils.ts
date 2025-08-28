@@ -1,4 +1,6 @@
 import { keccak256, hexToBytes } from 'viem'
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
 
 export function usdc(n: number) { return BigInt(Math.round(n * 1_000_000)); }
 export function fromUsdc(v: bigint) { return Number(v) / 1_000_000; }
@@ -12,3 +14,8 @@ export function randomSalt32(): `0x${string}` {
   return ('0x' + Array.from(arr, b => b.toString(16).padStart(2,'0')).join('')) as `0x${string}`;
 }
 export function commitOf(salt: `0x${string}`): `0x${string}` { return keccak256(hexToBytes(salt)); }
+
+// ✅ Add this at the bottom:
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
