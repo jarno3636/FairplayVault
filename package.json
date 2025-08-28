@@ -1,0 +1,14 @@
+{
+  "name": "fairplay-sentinel",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "ethers": "^6.13.2",
+    "express": "^4.19.2"
+  },
+  "scripts": {
+    "serve": "node sentinel_service.js",
+    "new-commit": "node sentinel_service.js new-commit"
+  }
+}
