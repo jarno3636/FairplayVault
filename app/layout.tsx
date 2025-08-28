@@ -2,6 +2,8 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import Providers from './providers'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
   title: 'FairplayVault',
@@ -10,14 +12,15 @@ export const metadata: Metadata = {
 
 // Prevent static export from evaluating client hooks without context
 export const dynamic = 'force-dynamic'
-// (Alternative: export const revalidate = 0)
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="bg-slate-950 text-slate-100">
         <Providers>
-          {children}
+          <Header />
+          <main className="min-h-screen">{children}</main>
+          <Footer />
         </Providers>
       </body>
     </html>
