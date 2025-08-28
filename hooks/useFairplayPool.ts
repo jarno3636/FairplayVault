@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Address } from 'viem'
 import { usePublicClient, useWalletClient } from 'wagmi'
 import { env } from '@/lib/env'
 import { FAIRPLAY_VAULT_ABI } from '@/lib/abi/FairplayVault'
 
-type PoolTuple = any // keep your existing type if you have one
+type PoolTuple = any // replace with your tuple type if you defined one
 
 const abi = FAIRPLAY_VAULT_ABI
 const vaultAddress = env.vault as Address
@@ -18,11 +18,12 @@ export function useFairplayPool(poolId: bigint) {
   const [pool, setPool] = useState<PoolTuple | null>(null)
   const [blockTs, setBlockTs] = useState<number | null>(null)
   const [err, setErr] = useState<Error | null>(null)
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState(false)
 
   const refresh = useCallback(async () => {
-    // ---- Guard for TS: bail if client not ready
-    if (!pub) {
+    // Narrow to a local const so TS knows it won't change inside this call
+    const client = pub
+    if (!client) {
       setErr(new Error('Public client not ready'))
       return
     }
@@ -30,8 +31,13 @@ export function useFairplayPool(poolId: bigint) {
       setLoading(true)
       setErr(null)
       const [p, blk] = await Promise.all([
-        pub.readContract({ address: vaultAddress, abi, functionName: 'pools', args: [poolId] }) as Promise<PoolTuple>,
-        pub.getBlock({ blockTag: 'latest' }),
+        client.readContract({
+          address: vaultAddress,
+          abi,
+          functionName: 'pools',
+          args: [poolId],
+        }) as Promise<PoolTuple>,
+        client.getBlock({ blockTag: 'latest' }),
       ])
       setPool(p)
       setBlockTs(Number(blk.timestamp))
@@ -43,17 +49,16 @@ export function useFairplayPool(poolId: bigint) {
   }, [pub, poolId])
 
   useEffect(() => {
-    // only try when pub exists
     if (!pub) return
     refresh().catch(() => {})
   }, [pub, refresh])
 
-  // Example write helper with same guard
   const enter = useCallback(
     async (qty: number) => {
-      if (!pub) throw new Error('Public client not ready')
+      const client = pub
+      if (!client) throw new Error('Public client not ready')
       if (!wallet) throw new Error('Connect wallet')
-      const sim = await pub.simulateContract({
+      const sim = await client.simulateContract({
         address: vaultAddress,
         abi,
         functionName: 'enter',
@@ -61,7 +66,7 @@ export function useFairplayPool(poolId: bigint) {
         account: wallet.account!,
       })
       const hash = await wallet.writeContract(sim.request)
-      await pub.waitForTransactionReceipt({ hash })
+      await client.waitForTransactionReceipt({ hash })
     },
     [pub, wallet, poolId]
   )
