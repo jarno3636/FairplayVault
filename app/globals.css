@@ -18,7 +18,8 @@ body {
 
 /* Card component */
 .card {
-  @apply bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 shadow-lg backdrop-blur;
+  @apply bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 shadow-lg backdrop-blur
+    transition-transform duration-200 hover:scale-[1.01];
 }
 
 /* Buttons */
@@ -45,7 +46,8 @@ body {
 
 /* Badges */
 .badge {
-  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs bg-slate-800 text-slate-300;
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs 
+    bg-slate-800 text-slate-200 border border-slate-700;
 }
 
 /* Grid utilities */
@@ -75,6 +77,15 @@ a.link {
   @apply container flex items-center justify-between py-4;
 }
 
+.nav-link {
+  @apply rounded-full px-3 py-1.5 text-sm text-slate-300 
+    hover:bg-white/5 hover:text-white transition;
+}
+
+.nav-link-active {
+  @apply bg-white/10 text-white;
+}
+
 /* Footer */
 .footer {
   @apply border-t border-slate-800/60 mt-12 py-6 text-center text-sm text-slate-500;
@@ -82,6 +93,16 @@ a.link {
 
 /* Hero section */
 .hero {
-  @apply relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-500/10 via-slate-900 to-slate-950
+  @apply relative overflow-hidden rounded-2xl bg-gradient-to-br 
+    from-cyan-500/10 via-slate-900 to-slate-950
     p-10 text-center shadow-xl;
+}
+
+.hero h1 {
+  @apply text-5xl sm:text-6xl font-extrabold bg-gradient-to-r 
+    from-cyan-400 to-blue-500 bg-clip-text text-transparent;
+}
+
+.hero p {
+  @apply mt-4 text-lg text-slate-300 max-w-2xl mx-auto;
 }
