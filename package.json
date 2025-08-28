@@ -30,6 +30,14 @@
   "devDependencies": {
     "eslint": "8.57.0",
     "eslint-config-next": "14.2.5",
-    "typescript": "5.4.5"
+    "typescript": "5.4.5",
+    "@types/react": "18.2.79",
+    "@types/react-dom": "18.2.25",
+    "@types/node": "20.14.12",
+    "encoding": "0.1.13",
+    "pino-pretty": "11.2.2"
+  },
+  "engines": {
+    "node": ">=18.17 <21"
   }
 }
