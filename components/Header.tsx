@@ -1,4 +1,3 @@
-// components/Header.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -7,37 +6,35 @@ import { usePathname } from 'next/navigation'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { cn } from '@/lib/utils'
 import { useAccount } from 'wagmi'
-import { isAdminAddress } from '@/lib/admin' // uses env var
+import { isAdminAddress } from '@/lib/admin' // <- uses env var
 
 export default function Header() {
-  const pathname = usePathname()
+  // Coerce possible null to empty string to satisfy TS
+  const pathname = usePathname() ?? ''
   const { address } = useAccount()
 
-  // Avoid flash of the Fees link by only computing after mount
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
 
   const isAdmin = mounted && isAdminAddress(address)
   const [open, setOpen] = useState(false)
 
-  // Close mobile menu on route change
   useEffect(() => { setOpen(false) }, [pathname])
 
-  // Close on Escape
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false) }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  // Treat a link as active if pathname matches exactly or is a child route (e.g. /products/*)
+  // Treat link as active if exact match or parent route (e.g., /products/*)
   const isActive = (href: string) =>
     pathname === href || (href !== '/' && pathname.startsWith(href + '/'))
 
   const nav = [
     { href: '/', label: 'Home' },
-    { href: '/products', label: 'Products' },            // NEW
-    ...(isAdmin ? [{ href: '/fees', label: 'Fees' }] : []), // only for admins
+    ...(isAdmin ? [{ href: '/fees', label: 'Fees' }] : []),
+    { href: '/products', label: 'Products' },
     { href: '/instructions', label: 'Instructions' },
     { href: '/about', label: 'About' },
   ]
@@ -45,13 +42,11 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/70 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
-        {/* Logo / Title */}
         <Link href="/" className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-xl bg-cyan-400/20 ring-1 ring-cyan-400/30" />
           <span className="text-lg font-semibold tracking-tight">FairplayVault</span>
         </Link>
 
-        {/* Desktop NAV */}
         <nav className="ml-auto hidden gap-1 md:flex">
           {nav.map((n) => (
             <Link
@@ -67,12 +62,10 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Desktop Wallet */}
         <div className="ml-2 hidden md:block">
           <ConnectButton showBalance={false} accountStatus="address" chainStatus="icon" />
         </div>
 
-        {/* Burger (mobile) */}
         <button
           type="button"
           aria-label="Toggle menu"
@@ -90,7 +83,6 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Mobile drawer */}
       <div
         id="mobile-nav"
         className={cn(
@@ -114,7 +106,6 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Wallet on mobile */}
           <div className="mt-3">
             <ConnectButton showBalance={false} accountStatus="address" chainStatus="icon" />
           </div>
