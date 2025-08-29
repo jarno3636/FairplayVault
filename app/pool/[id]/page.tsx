@@ -204,12 +204,15 @@ export default function PoolDetail() {
   const currentEntries = useMemo(() => pool ? pool[15] : 0, [pool])
   const remainingSlots = useMemo(() => Math.max(0, maxEntries - currentEntries), [maxEntries, currentEntries])
   const progress = pct(currentEntries, maxEntries)
-  const afterDeadline = now >= deadline
-  const beforeRevealEnd = now < revealDeadline
-  const revealOpen = now >= deadline && now < revealDeadline
-  const showEntryCountdown = !drawn && !canceled && now < deadline
-  const showRevealCountdown = !drawn && !canceled && revealOpen
-  const hasSentinel = useMemo(() => pool ? pool[12] !== '0x0000000000000000000000000000000000000000' : false, [pool])
+  const afterDeadline = useMemo(() => now >= deadline, [now, deadline])
+  const beforeRevealEnd = useMemo(() => now < revealDeadline, [now, revealDeadline])
+  const revealOpen = useMemo(() => now >= deadline && now < revealDeadline, [now, deadline, revealDeadline])
+  const showEntryCountdown = useMemo(() => !drawn && !canceled && now < deadline, [drawn, canceled, now, deadline])
+  const showRevealCountdown = useMemo(() => !drawn && !canceled && revealOpen, [drawn, canceled, revealOpen])
+  const hasSentinel = useMemo(
+    () => pool ? pool[12] !== '0x0000000000000000000000000000000000000000' : false,
+    [pool]
+  )
   const totalCost = useMemo(() => entryPrice * BigInt(qty), [entryPrice, qty])
 
   // clamp qty when remainingSlots changes
@@ -330,9 +333,9 @@ export default function PoolDetail() {
     )
   }
 
-  const shareUrl = typeof window !== 'undefined'
-    ? window.location.href
-    : `${process.env.NEXT_PUBLIC_SITE_URL}/pool/${idStr}`
+  // ✅ canonical share URL (no long vercel preview links)
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel.app'
+  const shareUrl = `${baseUrl}/pool/${idStr}`
 
   const isCreator = address && pool[0]?.toLowerCase() === address.toLowerCase()
   const isSentinel = address && pool[12]?.toLowerCase() === address.toLowerCase()
