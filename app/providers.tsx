@@ -2,20 +2,20 @@
 
 import '@rainbow-me/rainbowkit/styles.css'
 import { env } from '@/lib/env'
-import { base } from '@/lib/chains'
 import { getDefaultConfig, RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import { WagmiProvider, http } from 'wagmi'
+import { base } from 'wagmi/chains'            // ⬅️ use wagmi’s Base (includes multicall3)
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
 
 const queryClient = new QueryClient()
 
 const config = getDefaultConfig({
-  appName: 'Fairplay',
+  appName: 'FairPlay Vault',
   projectId: env.wcProjectId || 'demo',
   chains: [base],
   transports: { [base.id]: http(env.rpcUrl) },
-  ssr: true
+  ssr: true,
 })
 
 export function Providers({ children }: { children: React.ReactNode }) {
