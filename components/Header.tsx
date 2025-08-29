@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { cn } from '@/lib/utils'
 import { useAccount } from 'wagmi'
-import { isAdminAddress } from '@/lib/admin' // <- uses env var
+import { isAdminAddress } from '@/lib/admin'
 
 export default function Header() {
-  // Coerce possible null to empty string to satisfy TS
   const pathname = usePathname() ?? ''
   const { address } = useAccount()
 
@@ -27,7 +27,6 @@ export default function Header() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  // Treat link as active if exact match or parent route (e.g., /products/*)
   const isActive = (href: string) =>
     pathname === href || (href !== '/' && pathname.startsWith(href + '/'))
 
@@ -43,8 +42,15 @@ export default function Header() {
     <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/70 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
         <Link href="/" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-xl bg-cyan-400/20 ring-1 ring-cyan-400/30" />
-          <span className="text-lg font-semibold tracking-tight">FairplayVault</span>
+          <Image
+            src="/logo.PNG"
+            alt="FairPlay Vault Logo"
+            width={32}
+            height={32}
+            className="rounded-md"
+            priority
+          />
+          <span className="text-lg font-semibold tracking-tight">FairPlay Vault</span>
         </Link>
 
         <nav className="ml-auto hidden gap-1 md:flex">
