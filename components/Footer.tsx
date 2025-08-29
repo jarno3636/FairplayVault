@@ -1,3 +1,4 @@
+// components/Footer.tsx
 import Link from 'next/link'
 
 export default function Footer() {
@@ -12,9 +13,20 @@ export default function Footer() {
           <nav className="flex flex-wrap items-center gap-4">
             <Link href="/about" className="hover:text-slate-200">About</Link>
             <Link href="/instructions" className="hover:text-slate-200">How it works</Link>
-            <a href={process.env.NEXT_PUBLIC_EXPLORER || 'https://basescan.org'} target="_blank" className="hover:text-slate-200">Explorer</a>
-            <a href="https://github.com/" target="_blank" className="hover:text-slate-200">GitHub</a>
-            <a href="mailto:hello@example.com" className="hover:text-slate-200">Contact</a>
+            <a
+              href={process.env.NEXT_PUBLIC_EXPLORER || 'https://basescan.org'}
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-slate-200"
+            >
+              Explorer
+            </a>
+            <a
+              href="mailto:FairPlayVault@outlook.com"
+              className="hover:text-slate-200"
+            >
+              Contact
+            </a>
           </nav>
         </div>
         <div className="mt-6 text-xs text-slate-500">
