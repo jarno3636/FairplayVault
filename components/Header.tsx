@@ -5,17 +5,27 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { cn } from '@/lib/utils'
+import { useAccount } from 'wagmi'
 
-const nav = [
-  { href: '/', label: 'Home' },
-  { href: '/fees', label: 'Fees' },
-  { href: '/instructions', label: 'Instructions' },
-  { href: '/about', label: 'About' },
+// ✅ admin wallets (lowercased)
+const ADMIN_ADDRESSES = [
+  '0xYourWalletHere'.toLowerCase(),
+  // '0xAnotherWalletIfNeeded'.toLowerCase()
 ]
 
 export default function Header() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const { address } = useAccount()
+
+  const isAdmin = !!address && ADMIN_ADDRESSES.includes(address.toLowerCase())
+
+  const nav = [
+    { href: '/', label: 'Home' },
+    ...(isAdmin ? [{ href: '/fees', label: 'Fees' }] : []), // 👈 only show for admins
+    { href: '/instructions', label: 'Instructions' },
+    { href: '/about', label: 'About' },
+  ]
 
   // Close the menu when the route changes
   useEffect(() => { setOpen(false) }, [pathname])
