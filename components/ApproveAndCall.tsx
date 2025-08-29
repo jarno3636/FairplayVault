@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import type { Address } from 'viem'
-import { useAccount, usePublicClient, useWalletClient, useChainId } from 'wagmi'
+import { useAccount, usePublicClient, useWalletClient, useChainId, useSwitchChain } from 'wagmi'
 import toast from 'react-hot-toast'
 import { useTokenMeta } from '@/hooks/useTokenMeta'
 
@@ -42,6 +42,7 @@ export default function ApproveAndCall({
   const { data: wallet } = useWalletClient()
   const { address, isConnected } = useAccount()
   const chainId = useChainId()
+  const { switchChainAsync } = useSwitchChain()
 
   // Token meta (cached app-wide): symbol/decimals + formatter
   const { symbol, format: fmt } = useTokenMeta(token, { symbol: 'USDC', decimals: 6 })
@@ -60,9 +61,10 @@ export default function ApproveAndCall({
     [isConnected, pub, amount, loading, checking]
   )
 
-  // Read current allowance
+  // Read current allowance (guard against wrong network)
   const readAllowance = useCallback(async () => {
     if (!pub || !address) { setAllowance(0n); return }
+    if (requireBase && chainId !== BASE_CHAIN_ID) { setAllowance(0n); return }
     try {
       setChecking(true)
       const a = await pub.readContract({
@@ -74,33 +76,30 @@ export default function ApproveAndCall({
       setAllowance(a)
     } catch {
       // non-fatal
+      setAllowance(0n)
     } finally {
       setChecking(false)
     }
-  }, [pub, address, token, spender])
+  }, [pub, address, token, spender, chainId, requireBase])
 
   // Refresh on mount & when important inputs change
   useEffect(() => { readAllowance().catch(() => {}) }, [readAllowance])
   useEffect(() => { readAllowance().catch(() => {}) }, [amount])
   useEffect(() => { readAllowance().catch(() => {}) }, [chainId])
 
-  // Optional network guard (Base)
+  // Network guard (Base) — use wagmi switch for best compatibility
   const ensureBase = useCallback(async () => {
     if (!requireBase) return true
     if (chainId === BASE_CHAIN_ID) return true
-    if (!wallet?.switchChain) {
-      toast.error('Wrong network. Please switch to Base.')
-      return false
-    }
     try {
-      await wallet.switchChain({ id: BASE_CHAIN_ID })
+      await switchChainAsync({ chainId: BASE_CHAIN_ID })
       toast.success('Switched to Base')
       return true
     } catch (e: any) {
       toast.error(e?.shortMessage || e?.message || 'Switch failed')
       return false
     }
-  }, [chainId, wallet, requireBase])
+  }, [chainId, requireBase, switchChainAsync])
 
   // Approve action
   async function approve() {
@@ -144,7 +143,7 @@ export default function ApproveAndCall({
     return isInfiniteOnChain ? 'Approved (∞)' : 'Approved'
   }, [isConnected, amount, checking, needsApproval, symbol, infinite, isInfiniteOnChain])
 
-  // Prettified allowance display
+  // Prettified allowance display (∞ when effectively unlimited)
   const allowanceDisplay = useMemo(() => {
     return isInfiniteOnChain ? '∞' : `${fmt(allowance)} ${symbol}`
   }, [isInfiniteOnChain, allowance, fmt, symbol])
