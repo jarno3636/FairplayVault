@@ -1,6 +1,6 @@
 // app/page.tsx
 import Link from 'next/link'
-import { CheckCircle2, Shield, Timer, Ticket, TrendingUp, Layers } from 'lucide-react'
+import { CheckCircle2, Shield, Timer, Ticket, Layers } from 'lucide-react'
 import CreatePoolCard from '@/components/CreatePoolCard'
 import PoolList from '@/components/PoolList'
 
@@ -138,7 +138,7 @@ export default function Home() {
           </p>
           <div className="mt-4 flex justify-center gap-3">
             <Link href="/products" className="btn">Explore Products & SDK</Link>
-            <Link href="/fees" className="btn-secondary">Fee Management</Link>
+            {/* Removed Fee Management button */}
           </div>
           <p className="mt-3 flex items-center justify-center gap-2 text-sm text-slate-400">
             <CheckCircle2 className="h-4 w-4" /> Fully compatible with RainbowKit, wagmi, and viem
@@ -149,7 +149,7 @@ export default function Home() {
   )
 }
 
-/* ---------- tiny presentational helpers (inline to avoid new files) ---------- */
+/* ---------- tiny presentational helpers ---------- */
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
