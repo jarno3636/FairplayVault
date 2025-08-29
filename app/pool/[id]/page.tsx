@@ -16,7 +16,7 @@ import { FAIRPLAY_VAULT_ABI } from '@/lib/abi/FairplayVault'
 import ApproveAndCall from '@/components/ApproveAndCall'
 import { formatTs, formatUsd } from '@/lib/utils'
 
-const abi = FAIRPLAY_VAULT_ABI as const
+const abi = FAIRPLAY_VAULT_ABI
 const VAULT = env.vault as Address
 const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as Address // Base USDC
 const BASE_CHAIN_ID = 8453
