@@ -12,7 +12,7 @@ import {
 import toast from 'react-hot-toast'
 
 import { env } from '@/lib/env'
-import { FAIRPLAY_VAULT_ABI } from '@/lib/abi/Fairplay_Vault'
+import { FAIRPLAY_VAULT_ABI } from '@/lib/abi/FairplayVault'
 import ApproveAndCall from '@/components/ApproveAndCall'
 import { formatTs, formatUsd } from '@/lib/utils'
 
