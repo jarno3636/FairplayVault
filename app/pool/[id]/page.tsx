@@ -202,23 +202,28 @@ export default function PoolDetail() {
   const canceled = useMemo(() => pool ? pool[19] : false, [pool])
   const maxEntries = useMemo(() => pool ? pool[5] : 0, [pool])
   const currentEntries = useMemo(() => pool ? pool[15] : 0, [pool])
-  const remainingSlots = useMemo(() => Math.max(0, maxEntries - currentEntries), [maxEntries, currentEntries])
-  const progress = pct(currentEntries, maxEntries)
-  const afterDeadline = useMemo(() => now >= deadline, [now, deadline])
-  const beforeRevealEnd = useMemo(() => now < revealDeadline, [now, revealDeadline])
-  const revealOpen = useMemo(() => now >= deadline && now < revealDeadline, [now, deadline, revealDeadline])
-  const showEntryCountdown = useMemo(() => !drawn && !canceled && now < deadline, [drawn, canceled, now, deadline])
-  const showRevealCountdown = useMemo(() => !drawn && !canceled && revealOpen, [drawn, canceled, revealOpen])
+
+  // NEW: unlimited support
+  const unlimited = maxEntries === 0
+  const remainingFinite = Math.max(0, maxEntries - currentEntries)
+  const remainingSlots = unlimited ? Number.POSITIVE_INFINITY : remainingFinite
+  const progress = pct(currentEntries, unlimited ? currentEntries || 1 : maxEntries)
+
+  const afterDeadline = now >= deadline
+  const revealOpen = now >= deadline && now < revealDeadline
+  const showEntryCountdown = !drawn && !canceled && now < deadline
+  const showRevealCountdown = !drawn && !canceled && revealOpen
   const hasSentinel = useMemo(
     () => pool ? pool[12] !== '0x0000000000000000000000000000000000000000' : false,
     [pool]
   )
   const totalCost = useMemo(() => entryPrice * BigInt(qty), [entryPrice, qty])
 
-  // clamp qty when remainingSlots changes
+  // clamp qty when remainingSlots changes (don’t clamp if unlimited)
   useEffect(() => {
-    setQty(q => Math.min(Math.max(1, q), Math.max(1, remainingSlots || 1)))
-  }, [remainingSlots])
+    if (unlimited) return
+    setQty(q => Math.min(Math.max(1, q), Math.max(1, remainingFinite || 1)))
+  }, [remainingFinite, unlimited])
 
   // actions
   const ensureBase = async () => {
@@ -242,7 +247,7 @@ export default function PoolDetail() {
     if (!wallet) return toast.error('Connect wallet')
     if (!(await ensureBase())) return
     if (qty < 1) return toast.error('Quantity must be at least 1')
-    if (qty > remainingSlots) return toast.error('Not enough slots remaining')
+    if (!unlimited && qty > remainingFinite) return toast.error('Not enough slots remaining')
     if (afterDeadline) return toast.error('Deadline has passed')
     if (drawn || canceled) return toast.error('Pool is closed')
 
@@ -333,9 +338,9 @@ export default function PoolDetail() {
     )
   }
 
-  // ✅ canonical share URL (no long vercel preview links)
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel.app'
-  const shareUrl = `${baseUrl}/pool/${idStr}`
+  // Short, canonical share URL (env fallback)
+  const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel.app'
+  const shareUrl = `${site.replace(/\/$/, '')}/pool/${idStr}`
 
   const isCreator = address && pool[0]?.toLowerCase() === address.toLowerCase()
   const isSentinel = address && pool[12]?.toLowerCase() === address.toLowerCase()
@@ -429,11 +434,11 @@ export default function PoolDetail() {
           )}
 
           <KV label="Entry price" value={formatUsd(entryPrice)} />
-          <KV label="Entries" value={`${currentEntries} / ${maxEntries || '∞'}`} />
+          <KV label="Entries" value={`${currentEntries} / ${unlimited ? '∞' : maxEntries}`} />
         </div>
 
-        {/* progress bar */}
-        {maxEntries > 0 && (
+        {/* progress bar (only if capped) */}
+        {!unlimited && (
           <div className="mt-3 h-2 w-full rounded-full bg-white/10">
             <div
               className="h-2 rounded-full bg-white/60"
@@ -481,28 +486,39 @@ export default function PoolDetail() {
                 className="input w-[110px] text-center"
                 type="number"
                 min={1}
-                max={Math.max(1, remainingSlots)}
+                // omit max when unlimited
+                {...(!unlimited ? { max: Math.max(1, remainingFinite) } : {})}
                 value={qty}
                 onChange={(e) => {
                   const v = Math.floor(Number(e.target.value || 1))
-                  setQty(isFinite(v) ? Math.min(Math.max(1, v), Math.max(1, remainingSlots)) : 1)
+                  if (unlimited) {
+                    setQty(isFinite(v) ? Math.max(1, v) : 1)
+                  } else {
+                    setQty(isFinite(v) ? Math.min(Math.max(1, v), Math.max(1, remainingFinite)) : 1)
+                  }
                 }}
               />
               <button
                 className="btn-ghost px-3"
-                onClick={() => setQty(q => Math.min(q + 1, Math.max(1, remainingSlots)))}
-                disabled={qty >= Math.max(1, remainingSlots)}
+                onClick={() =>
+                  setQty(q => unlimited ? Math.max(1, q + 1) : Math.min(q + 1, Math.max(1, remainingFinite)))
+                }
+                disabled={!unlimited && qty >= Math.max(1, remainingFinite)}
               >+</button>
-              <button
-                className="btn-ghost"
-                onClick={() => setQty(Math.max(1, remainingSlots))}
-                disabled={remainingSlots <= 1}
-                title="Max available"
-              >
-                Max
-              </button>
+              {!unlimited && (
+                <button
+                  className="btn-ghost"
+                  onClick={() => setQty(Math.max(1, remainingFinite))}
+                  disabled={remainingFinite <= 1}
+                  title="Max available"
+                >
+                  Max
+                </button>
+              )}
             </div>
-            <div className="text-xs text-slate-400">Remaining: {remainingSlots}</div>
+            <div className="text-xs text-slate-400">
+              Remaining: {unlimited ? '∞' : remainingFinite}
+            </div>
           </div>
 
           <div className="space-y-1">
@@ -518,14 +534,15 @@ export default function PoolDetail() {
             className="btn-secondary"
             onClick={enter}
             disabled={
-              busy || !isConnected || canceled || drawn || afterDeadline || qty < 1 || qty > remainingSlots
+              busy || !isConnected || canceled || drawn || afterDeadline ||
+              qty < 1 || (!unlimited && qty > remainingFinite)
             }
             title={
               !isConnected ? 'Connect wallet'
               : afterDeadline ? 'Deadline passed'
               : drawn ? 'Already drawn'
               : canceled ? 'Canceled'
-              : qty > remainingSlots ? 'Not enough slots'
+              : (!unlimited && qty > remainingFinite) ? 'Not enough slots'
               : undefined
             }
           >
