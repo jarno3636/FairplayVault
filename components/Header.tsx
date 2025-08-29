@@ -1,3 +1,4 @@
+// components/Header.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -6,13 +7,13 @@ import { usePathname } from 'next/navigation'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { cn } from '@/lib/utils'
 import { useAccount } from 'wagmi'
-import { isAdminAddress } from '@/lib/admin' // <- uses env var
+import { isAdminAddress } from '@/lib/admin' // uses env var
 
 export default function Header() {
   const pathname = usePathname()
   const { address } = useAccount()
 
-  // Avoid any flash of the Fees link by only computing after mount
+  // Avoid flash of the Fees link by only computing after mount
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
 
@@ -29,8 +30,13 @@ export default function Header() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  // Treat a link as active if pathname matches exactly or is a child route (e.g. /products/*)
+  const isActive = (href: string) =>
+    pathname === href || (href !== '/' && pathname.startsWith(href + '/'))
+
   const nav = [
     { href: '/', label: 'Home' },
+    { href: '/products', label: 'Products' },            // NEW
     ...(isAdmin ? [{ href: '/fees', label: 'Fees' }] : []), // only for admins
     { href: '/instructions', label: 'Instructions' },
     { href: '/about', label: 'About' },
@@ -53,7 +59,7 @@ export default function Header() {
               href={n.href}
               className={cn(
                 'rounded-full px-3 py-1.5 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition',
-                pathname === n.href && 'bg-white/10 text-white'
+                isActive(n.href) && 'bg-white/10 text-white'
               )}
             >
               {n.label}
@@ -100,7 +106,7 @@ export default function Header() {
                 href={n.href}
                 className={cn(
                   'rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition',
-                  pathname === n.href && 'bg-white/10 text-white'
+                  isActive(n.href) && 'bg-white/10 text-white'
                 )}
               >
                 {n.label}
