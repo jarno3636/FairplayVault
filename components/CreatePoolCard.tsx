@@ -15,6 +15,7 @@ import { useTokenMeta } from '@/hooks/useTokenMeta'
 import Tooltip from '@/components/Tooltip'
 import FeesExplainer from '@/components/FeesExplainer'
 import SaltField from '@/components/SaltField'
+import DurationPicker from '@/components/DurationPicker' // ⬅️ NEW
 
 const USDC: Address = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' // Base USDC
 const BASE_CHAIN_ID = 8453
@@ -37,6 +38,8 @@ export default function CreatePoolCard() {
   const [maxEntries, setMaxEntries] = useState(0)
   const [bond, setBond] = useState('50.00')
   const [creatorSalt, setCreatorSalt] = useState<`0x${string}`>(randomSalt32())
+
+  // ⏱️ durations in minutes (driven by DurationPicker)
   const [deadlineMin, setDeadlineMin] = useState(30)
   const [revealMin, setRevealMin] = useState(10)
 
@@ -57,7 +60,10 @@ export default function CreatePoolCard() {
   // derived
   const entryPrice = useMemo(() => safeParse(entry, parseToken), [entry, parseToken])
   const creatorBond = useMemo(() => safeParse(bond, parseToken), [bond, parseToken])
-  const sentinelBondRaw = useMemo(() => (useSentinel ? safeParse(sentinelBond, parseToken) : 0n), [useSentinel, sentinelBond, parseToken])
+  const sentinelBondRaw = useMemo(
+    () => (useSentinel ? safeParse(sentinelBond, parseToken) : 0n),
+    [useSentinel, sentinelBond, parseToken]
+  )
   const totalRequired = useMemo(() => creatorBond + sentinelBondRaw, [creatorBond, sentinelBondRaw])
 
   function safeParse(v: string, parseFn: (s: string) => bigint) {
@@ -222,20 +228,26 @@ export default function CreatePoolCard() {
         </div>
       </Section>
 
-      {/* WINDOWS */}
+      {/* WINDOWS — replaced with DurationPicker */}
       <Section title="Windows" hint="Entry and reveal timing.">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <LabeledNumber
-            label={<LabelWithTip text="Entry window (minutes)" tip="How long users can join after creation." />}
-            value={deadlineMin} onChange={v=>setDeadlineMin(Math.max(1, v))} min={1}
+          <DurationPicker
+            label="Entry window"
+            valueMinutes={deadlineMin}
+            onChange={setDeadlineMin}
+            minMinutes={1}
           />
-          <LabeledNumber
-            label={<LabelWithTip text="Reveal window (minutes)" tip="Extra time after entries close for your reveal." />}
-            value={revealMin} onChange={v=>setRevealMin(Math.max(1, v))} min={1}
+          <DurationPicker
+            label="Reveal window (after entries close)"
+            valueMinutes={revealMin}
+            onChange={setRevealMin}
+            minMinutes={1}
           />
-          <LabeledNumber
-            label={<LabelWithTip text="Sentinel reveal (minutes)" tip="If using a sentinel, how long they have to reveal." />}
-            value={sentinelDeadlineMin} onChange={v=>setSentinelDeadlineMin(Math.max(1, v))} min={1}
+          <DurationPicker
+            label="Sentinel reveal (if enabled)"
+            valueMinutes={sentinelDeadlineMin}
+            onChange={setSentinelDeadlineMin}
+            minMinutes={1}
           />
         </div>
       </Section>
@@ -348,7 +360,7 @@ export default function CreatePoolCard() {
             onApproveDone={() => doCreate()}
             className="btn"
           />
-          <button className="btn-secondary" onClick={doCreate} disabled={busy}>
+        <button className="btn-secondary" onClick={doCreate} disabled={busy}>
             Create (I already approved)
           </button>
         </div>
