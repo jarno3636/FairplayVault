@@ -20,20 +20,21 @@ const USDC: Address = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' // Base USDC
 const BASE_CHAIN_ID = 8453
 const MAX_BPS = 10_000
 
+// 🔒 Locked fee values (from env with fallbacks)
+const LOCKED_BUILDER_FEE_BPS = Math.min(Math.max(env.fixedBuilderFeeBps ?? 200, 0), MAX_BPS)
+const LOCKED_PROTOCOL_FEE_BPS = Math.min(Math.max(env.fixedProtocolFeeBps ?? 100, 0), MAX_BPS)
+
 export default function CreatePoolCard() {
   const chainId = useChainId()
   const { data: wallet } = useWalletClient()
   const { address, isConnected } = useAccount()
   const { createPool } = useVault()
-
-  const { symbol, decimals, parse: parseToken, format: fmt } = useTokenMeta(USDC, { symbol: 'USDC', decimals: 6 })
+  const { symbol, parse: parseToken, format: fmt } = useTokenMeta(USDC, { symbol: 'USDC', decimals: 6 })
 
   // form state
   const [entry, setEntry] = useState('1.00')
   const [minEntries, setMinEntries] = useState(0)
   const [maxEntries, setMaxEntries] = useState(0)
-  const [builderFeeBps, setBfbps] = useState(200)
-  const [protocolFeeBps, setPfbps] = useState(100)
   const [bond, setBond] = useState('50.00')
   const [creatorSalt, setCreatorSalt] = useState<`0x${string}`>(randomSalt32())
   const [deadlineMin, setDeadlineMin] = useState(30)
@@ -78,10 +79,11 @@ export default function CreatePoolCard() {
     if (useSentinel && sentinelBondRaw < 0n) return `Sentinel bond must be ≥ 0 ${symbol}.`
     if (minEntries < 0 || maxEntries < 0) return 'Entry counts cannot be negative.'
     if (maxEntries !== 0 && minEntries > maxEntries) return 'Min entries cannot exceed max.'
-    if (builderFeeBps < 0 || builderFeeBps > MAX_BPS) return 'Builder fee (bps) must be 0–10000.'
-    if (protocolFeeBps < 0 || protocolFeeBps > MAX_BPS) return 'Protocol fee (bps) must be 0–10000.'
     if (deadlineMin < 1) return 'Entry window must be at least 1 minute.'
     if (revealMin < 1) return 'Reveal window must be at least 1 minute.'
+    // Fees are locked, but we can sanity-check anyway:
+    if (LOCKED_BUILDER_FEE_BPS < 0 || LOCKED_BUILDER_FEE_BPS > MAX_BPS) return 'Builder fee config invalid.'
+    if (LOCKED_PROTOCOL_FEE_BPS < 0 || LOCKED_PROTOCOL_FEE_BPS > MAX_BPS) return 'Protocol fee config invalid.'
     if (useSentinel) {
       if (!sentinelAddress || !/^0x[0-9a-fA-F]{40}$/.test(sentinelAddress)) return 'Sentinel address is invalid.'
       if (!sentinelCommitHash || !/^0x[0-9a-fA-F]{64}$/.test(sentinelCommitHash)) return 'Sentinel commit hash is invalid.'
@@ -92,11 +94,11 @@ export default function CreatePoolCard() {
 
   function applyPreset(kind: 'low'|'standard'|'high') {
     if (kind === 'low') {
-      setEntry('0.50'); setBond('10'); setBfbps(100); setPfbps(50); setDeadlineMin(20); setRevealMin(5); setExpectedEntries(25)
+      setEntry('0.50'); setBond('10'); setDeadlineMin(20); setRevealMin(5); setExpectedEntries(25)
     } else if (kind === 'standard') {
-      setEntry('1.00'); setBond('50'); setBfbps(200); setPfbps(100); setDeadlineMin(30); setRevealMin(10); setExpectedEntries(50)
+      setEntry('1.00'); setBond('50'); setDeadlineMin(30); setRevealMin(10); setExpectedEntries(50)
     } else {
-      setEntry('5.00'); setBond('100'); setBfbps(250); setPfbps(150); setDeadlineMin(60); setRevealMin(15); setExpectedEntries(80)
+      setEntry('5.00'); setBond('100'); setDeadlineMin(60); setRevealMin(15); setExpectedEntries(80)
     }
   }
 
@@ -140,16 +142,23 @@ export default function CreatePoolCard() {
       const pass = window.prompt('Optional: set a passphrase to encrypt your creator salt (leave empty to store raw).') || ''
       const saltToStore = pass ? await encryptText(pass, creatorSalt) : creatorSalt
 
+      // 🔒 Choose who receives builder fee: env override or creator by default
+      const builderFeeRecipient: Address =
+        (env.builderFeeRecipient as Address) ||
+        (address as Address) ||
+        ('0x0000000000000000000000000000000000000000' as Address)
+
       const cp: CreateParams = {
         deadline, revealDeadline, sentinelRevealDeadline,
         maxEntries, minEntries, entryPrice,
-        builderFeeBps, protocolFeeBps,
+        builderFeeBps: LOCKED_BUILDER_FEE_BPS,
+        protocolFeeBps: LOCKED_PROTOCOL_FEE_BPS,
         creatorCommitHash: commitOf(creatorSalt),
         creatorBond,
         sentinel: useSentinel ? (sentinelAddress as Address) : ('0x0000000000000000000000000000000000000000' as Address),
         sentinelCommitHash: (useSentinel ? sentinelCommitHash : ('0x' + '0'.repeat(64))) as `0x${string}`,
         sentinelBond: useSentinel ? sentinelBondRaw : 0n,
-        builderFeeRecipient: (address || '0x0000000000000000000000000000000000000000') as Address,
+        builderFeeRecipient,
       }
 
       const { poolId } = await createPool(cp)
@@ -231,40 +240,56 @@ export default function CreatePoolCard() {
         </div>
       </Section>
 
-      {/* FEES + PREVIEW TOGGLE */}
-      <Section title="Fees" hint="BPS = basis points (1% = 100 bps).">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <LabeledNumber
-            label={<LabelWithTip text="Builder fee (bps)" tip="Goes to the builder recipient. 200 bps = 2%." />}
-            value={builderFeeBps} onChange={v=>setBfbps(clamp(v,0,MAX_BPS))} min={0} max={MAX_BPS}
-          />
-          <LabeledNumber
-            label={<LabelWithTip text="Protocol fee (bps)" tip="Goes to the protocol. 100 bps = 1%." />}
-            value={protocolFeeBps} onChange={v=>setPfbps(clamp(v,0,MAX_BPS))} min={0} max={MAX_BPS}
-          />
-        </div>
-
-        <button
-          type="button"
-          className="mt-3 text-sm text-cyan-300 hover:text-cyan-200 underline decoration-cyan-300/40"
-          onClick={()=>setShowFees(v=>!v)}
-        >
-          {showFees ? 'Hide' : 'Show'} prize & fees preview
-        </button>
-
-        {showFees && (
-          <div className="mt-3">
-            <FeesExplainer
-              entryPrice={entryPrice}
-              builderFeeBps={builderFeeBps}
-              protocolFeeBps={protocolFeeBps}
-              expectedEntries={expectedEntries}
-              onChangeExpected={setExpectedEntries}
-              format={fmt}
-              symbol={symbol}
-            />
+      {/* FEES — LOCKED */}
+      <Section title="Fees" hint="These are fixed on the hosted app. SDK users can set their own.">
+        <div className="rounded-xl border border-white/10 p-4 bg-slate-900/40">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+            <div>
+              <span className="text-slate-400">Builder fee</span>{' '}
+              <span className="font-medium">{(LOCKED_BUILDER_FEE_BPS/100).toFixed(2)}%</span>{' '}
+              <Tooltip content="A configurable fee for integrators/builders. Locked on this app for consistency.">
+                <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-xs text-slate-200">i</span>
+              </Tooltip>
+            </div>
+            <div>
+              <span className="text-slate-400">Protocol fee</span>{' '}
+              <span className="font-medium">{(LOCKED_PROTOCOL_FEE_BPS/100).toFixed(2)}%</span>{' '}
+              <Tooltip content="Goes to the protocol as configured on the deployed vault contract.">
+                <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-xs text-slate-200">i</span>
+              </Tooltip>
+            </div>
+            {env.builderFeeRecipient && (
+              <div className="text-slate-400">
+                Recipient override: <code className="text-slate-300">{env.builderFeeRecipient}</code>
+              </div>
+            )}
           </div>
-        )}
+
+          <button
+            type="button"
+            className="mt-3 text-sm text-cyan-300 hover:text-cyan-200 underline decoration-cyan-300/40"
+            onClick={()=>setShowFees(v=>!v)}
+          >
+            {showFees ? 'Hide' : 'Show'} prize & fees preview
+          </button>
+
+          {showFees && (
+            <div className="mt-3">
+              <FeesExplainer
+                entryPrice={entryPrice}
+                builderFeeBps={LOCKED_BUILDER_FEE_BPS}
+                protocolFeeBps={LOCKED_PROTOCOL_FEE_BPS}
+                expectedEntries={expectedEntries}
+                onChangeExpected={setExpectedEntries}
+                format={fmt}
+                symbol={symbol}
+              />
+            </div>
+          )}
+        </div>
+        <div className="text-xs text-slate-500 mt-2">
+          Developer? Use the FairplayVault SDK to set your own fee policy on your deployment.
+        </div>
       </Section>
 
       {/* SENTINEL */}
@@ -364,10 +389,6 @@ function LabelWithTip({ text, tip }: { text: string; tip: string }) {
       </Tooltip>
     </span>
   )
-}
-
-function clamp(n: number, lo: number, hi: number) {
-  return Math.max(lo, Math.min(hi, Number.isFinite(n) ? n : lo))
 }
 
 function LabeledInput({
