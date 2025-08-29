@@ -38,6 +38,9 @@ export default function Header() {
     { href: '/about', label: 'About' },
   ]
 
+  const cbwalletUrl =
+    'cbwallet://dapp?url=https%3A%2F%2Ffairplay-vault.vercel.app'
+
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/70 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
@@ -53,7 +56,7 @@ export default function Header() {
           <span className="text-lg font-semibold tracking-tight">FairPlay Vault</span>
         </Link>
 
-        <nav className="ml-auto hidden gap-1 md:flex">
+        <nav className="ml-auto hidden gap-1 md:flex items-center">
           {nav.map((n) => (
             <Link
               key={n.href}
@@ -66,6 +69,14 @@ export default function Header() {
               {n.label}
             </Link>
           ))}
+
+          {/* Coinbase Wallet deep link */}
+          <a
+            href={cbwalletUrl}
+            className="ml-2 rounded-full bg-cyan-500/20 text-cyan-300 px-3 py-1.5 text-sm hover:bg-cyan-500/30 transition"
+          >
+            Open in Coinbase Wallet
+          </a>
         </nav>
 
         <div className="ml-2 hidden md:block">
@@ -110,6 +121,14 @@ export default function Header() {
                 {n.label}
               </Link>
             ))}
+
+            {/* Coinbase Wallet deep link (mobile) */}
+            <a
+              href={cbwalletUrl}
+              className="rounded-lg px-3 py-2 text-sm text-cyan-300 bg-cyan-500/20 hover:bg-cyan-500/30 transition"
+            >
+              Open in Coinbase Wallet
+            </a>
           </nav>
 
           <div className="mt-3">
