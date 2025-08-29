@@ -17,6 +17,10 @@ const ERC20_MIN_ABI = [
 ] as const
 
 const MAX_UINT256 = (2n ** 256n) - 1n
+// Treat any very large allowance as "infinite" for display.
+// This covers tokens that clamp to large values instead of EXACT MAX_UINT256.
+const INFINITE_THRESHOLD = MAX_UINT256 / 2n
+
 const BASE_CHAIN_ID = 8453
 
 type Props = {
@@ -54,7 +58,7 @@ export default function ApproveAndCall({
   const [infinite, setInfinite] = useState<boolean>(infiniteProp)
 
   // Derived
-  const isInfiniteOnChain = allowance === MAX_UINT256
+  const isInfiniteOnChain = allowance >= INFINITE_THRESHOLD
   const needsApproval = useMemo(() => allowance < amount, [allowance, amount])
   const disabled = useMemo(
     () => !isConnected || !pub || amount <= 0n || loading || checking,
