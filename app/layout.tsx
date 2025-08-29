@@ -17,9 +17,7 @@ export const metadata: Metadata = {
   },
   description:
     'Create and join commit–reveal USDC pools on Base. Transparent, no VRF required.',
-  alternates: {
-    canonical: SITE,
-  },
+  alternates: { canonical: SITE },
   openGraph: {
     type: 'website',
     url: SITE,
@@ -28,7 +26,7 @@ export const metadata: Metadata = {
     description: 'Provably-fair USDC pools on Base.',
     images: [
       {
-        url: '/og.png', // place a 1200x630 image at public/og.png
+        url: '/og.png',
         width: 1200,
         height: 630,
         alt: 'FairPlay Vault — Provably-fair USDC pools on Base',
@@ -63,13 +61,11 @@ export const metadata: Metadata = {
   },
   applicationName: 'FairPlay Vault',
   category: 'finance',
-  other: {
-    'og:locale': 'en_US',
-  },
+  other: { 'og:locale': 'en_US' },
 }
 
 export const viewport: Viewport = {
-  themeColor: '#0B1220', // matches your dark bg
+  themeColor: '#0B1220',
   width: 'device-width',
   initialScale: 1,
   colorScheme: 'dark',
@@ -79,8 +75,26 @@ export const viewport: Viewport = {
 export const dynamic = 'force-dynamic'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'FairPlay Vault',
+    url: SITE,
+    applicationCategory: 'FinanceApplication',
+    operatingSystem: 'Any',
+    description: 'Create and join provably-fair commit–reveal USDC pools on Base.',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  }
+
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="bg-slate-950 text-slate-100">
         <Providers>
           <Header />
