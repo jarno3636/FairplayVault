@@ -52,9 +52,7 @@ export default function SdkFeaturedDemo() {
     <ProductCard
       title="Fairplay SDK (Featured)"
       subtitle="Typed helpers for building Fairplay apps on Base with viem + wagmi."
-      // Show usage snippet in the built-in expandable code area
       code={usageCode}
-      // Use the demo area for install commands and quick facts
       demo={
         <div className="space-y-3 text-sm">
           <div className="flex items-center justify-between">
@@ -65,6 +63,7 @@ export default function SdkFeaturedDemo() {
               <CopyCode code={installPnpm} />
             </div>
           </div>
+
           <div className="grid gap-2 sm:grid-cols-3">
             <code className="rounded-md bg-black/40 p-2 text-xs">npm i @fairplaylabs/sdk viem wagmi</code>
             <code className="rounded-md bg-black/40 p-2 text-xs">yarn add @fairplaylabs/sdk viem wagmi</code>
@@ -91,13 +90,6 @@ export default function SdkFeaturedDemo() {
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2">
-            <a
-              className="btn"
-              href="https://github.com/fairplaylabs/sdk" // update if different
-              target="_blank"
-            >
-              GitHub
-            </a>
             <a
               className="btn-secondary"
               href="/docs/sdk" // update if you publish docs
