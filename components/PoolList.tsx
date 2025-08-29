@@ -5,8 +5,9 @@ import type { Address, Abi } from 'viem'
 import { usePublicClient } from 'wagmi'
 import { env } from '@/lib/env'
 import { FAIRPLAY_VAULT_ABI } from '@/lib/abi/FairplayVault'
-import { formatTs, timeLeft, formatUsd } from '@/lib/utils'
+import { formatTs, formatUsd } from '@/lib/utils'
 import toast from 'react-hot-toast'
+import Countdown from '@/components/Countdown' // <-- ✅ use your Countdown
 
 const abi: Abi = FAIRPLAY_VAULT_ABI as unknown as Abi
 const VAULT = env.vault as Address
@@ -62,6 +63,13 @@ export default function PoolList() {
   const [loading, setLoading] = useState(true)
   const [errShown, setErrShown] = useState(false)
   const mounted = useRef(true)
+
+  // For deciding which countdown to show (entry vs reveal)
+  const [now, setNow] = useState<number>(() => Math.floor(Date.now() / 1000))
+  useEffect(() => {
+    const t = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000)
+    return () => clearInterval(t)
+  }, [])
 
   // Compute id list (descending) with optional search filter
   const ids = useMemo(() => {
@@ -267,6 +275,9 @@ export default function PoolList() {
             const canceled = Boolean(pool[19])
             const statusBadge = canceled ? 'Canceled' : drawn ? 'Drawn' : 'Open'
 
+            const showEntryCountdown = !drawn && !canceled && now < deadline
+            const showRevealCountdown = !drawn && !canceled && now >= deadline && now < revealDeadline
+
             return (
               <a
                 key={id.toString()}
@@ -279,12 +290,21 @@ export default function PoolList() {
                 </div>
 
                 <div className="text-sm text-slate-400">
-                  Deadline: {formatTs(deadline)} {(!drawn && !canceled) && (
-                    <> ({timeLeft(deadline)} left)</>
+                  Deadline: {formatTs(deadline)}
+                  {showEntryCountdown && (
+                    <div className="mt-2">
+                      <Countdown target={deadline} label="Entry closes in" showBar={false} />
+                    </div>
                   )}
                 </div>
-                <div className="text-sm text-slate-400">
+
+                <div className="text-sm text-slate-400 mt-2">
                   Reveal by: {formatTs(revealDeadline)}
+                  {showRevealCountdown && (
+                    <div className="mt-2">
+                      <Countdown target={revealDeadline} label="Reveal ends in" showBar={false} />
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-3 flex items-center justify-between">
