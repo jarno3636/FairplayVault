@@ -6,7 +6,7 @@ import { useAccount, usePublicClient, useWalletClient, useChainId } from 'wagmi'
 import toast from 'react-hot-toast'
 import { useTokenMeta } from '@/hooks/useTokenMeta'
 
-// Minimal ERC20 ABI (JSON) for allowance/approve (read meta via hook)
+// Minimal ERC20 ABI (JSON) for allowance/approve
 const ERC20_MIN_ABI = [
   { type: 'function', name: 'allowance', stateMutability: 'view',
     inputs: [{ name: 'owner', type: 'address' }, { name: 'spender', type: 'address' }],
@@ -44,7 +44,7 @@ export default function ApproveAndCall({
   const chainId = useChainId()
 
   // Token meta (cached app-wide): symbol/decimals + formatter
-  const { symbol, decimals, format: fmt } = useTokenMeta(token, { symbol: 'USDC', decimals: 6 })
+  const { symbol, format: fmt } = useTokenMeta(token, { symbol: 'USDC', decimals: 6 })
 
   // Local state
   const [allowance, setAllowance] = useState<bigint>(0n)
@@ -53,6 +53,7 @@ export default function ApproveAndCall({
   const [infinite, setInfinite] = useState<boolean>(infiniteProp)
 
   // Derived
+  const isInfiniteOnChain = allowance === MAX_UINT256
   const needsApproval = useMemo(() => allowance < amount, [allowance, amount])
   const disabled = useMemo(
     () => !isConnected || !pub || amount <= 0n || loading || checking,
@@ -80,8 +81,8 @@ export default function ApproveAndCall({
 
   // Refresh on mount & when important inputs change
   useEffect(() => { readAllowance().catch(() => {}) }, [readAllowance])
-  useEffect(() => { readAllowance().catch(() => {}) }, [amount])          // amount change may alter needsApproval
-  useEffect(() => { readAllowance().catch(() => {}) }, [chainId])         // network changes
+  useEffect(() => { readAllowance().catch(() => {}) }, [amount])
+  useEffect(() => { readAllowance().catch(() => {}) }, [chainId])
 
   // Optional network guard (Base)
   const ensureBase = useCallback(async () => {
@@ -125,7 +126,7 @@ export default function ApproveAndCall({
 
       toast.success(`Approved ${infinite ? 'infinite ' : ''}${symbol}`)
       onApproveDone?.(hash)
-      await readAllowance() // refresh; some tokens clamp or reset allowance patterns
+      await readAllowance() // refresh after tx
     } catch (e: any) {
       toast.error(e?.shortMessage || e?.message || 'Approval failed')
     } finally {
@@ -133,14 +134,20 @@ export default function ApproveAndCall({
     }
   }
 
-  // Button label
+  // Button label (smart, with ∞ awareness)
   const label = useMemo(() => {
-    if (!isConnected) return `Connect wallet`
-    if (amount <= 0n) return `Enter amount`
+    if (!isConnected) return 'Connect wallet'
+    if (amount <= 0n) return 'Enter amount'
     if (checking) return `Checking ${symbol}…`
     if (needsApproval) return `Approve ${symbol}${infinite ? ' (∞)' : ''}`
-    return `Approved`
-  }, [isConnected, amount, checking, needsApproval, symbol, infinite])
+    // already approved
+    return isInfiniteOnChain ? 'Approved (∞)' : 'Approved'
+  }, [isConnected, amount, checking, needsApproval, symbol, infinite, isInfiniteOnChain])
+
+  // Prettified allowance display
+  const allowanceDisplay = useMemo(() => {
+    return isInfiniteOnChain ? '∞' : `${fmt(allowance)} ${symbol}`
+  }, [isInfiniteOnChain, allowance, fmt, symbol])
 
   return (
     <div className="flex flex-col gap-1">
@@ -157,9 +164,9 @@ export default function ApproveAndCall({
         {loading ? 'Approving…' : label}
       </button>
 
-      {/* extras */}
+      {/* Status row */}
       <div className="text-xs text-slate-400 flex items-center gap-3">
-        <span>Allowance: {fmt(allowance)} {symbol}</span>
+        <span>Allowance: {allowanceDisplay}</span>
         <label className="flex items-center gap-1 cursor-pointer">
           <input
             type="checkbox"
