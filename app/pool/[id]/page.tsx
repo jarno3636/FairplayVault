@@ -14,6 +14,7 @@ import toast from 'react-hot-toast'
 import { env } from '@/lib/env'
 import { FAIRPLAY_VAULT_ABI } from '@/lib/abi/FairplayVault'
 import ApproveAndCall from '@/components/ApproveAndCall'
+import Countdown from '@/components/Countdown'
 import { formatTs, formatUsd } from '@/lib/utils'
 
 const abi = FAIRPLAY_VAULT_ABI
@@ -64,14 +65,6 @@ function pct(n: number, d: number) {
   return Math.max(0, Math.min(100, Math.round((n / d) * 100)))
 }
 
-function fmtCountdown(now: number, target: number) {
-  const s = Math.max(0, target - now)
-  const hh = Math.floor(s / 3600)
-  const mm = Math.floor((s % 3600) / 60)
-  const ss = s % 60
-  return `${hh}h ${mm}m ${ss}s`
-}
-
 function copy(str: string) {
   navigator.clipboard.writeText(str).then(
     () => toast.success('Link copied'),
@@ -87,11 +80,7 @@ export default function PoolDetail() {
   const idStr = Array.isArray(idParam) ? idParam[0] : idParam
   if (!idStr) return <div className="card">Invalid pool id.</div>
   let poolId: bigint
-  try {
-    poolId = BigInt(idStr)
-  } catch {
-    return <div className="card">Invalid pool id.</div>
-  }
+  try { poolId = BigInt(idStr) } catch { return <div className="card">Invalid pool id.</div> }
 
   // chain & clients
   const chainId = useChainId()
@@ -141,9 +130,7 @@ export default function PoolDetail() {
   }, [pub, poolId])
 
   // initial + whenever pub changes
-  useEffect(() => {
-    refresh().catch(() => {})
-  }, [refresh])
+  useEffect(() => { refresh().catch(() => {}) }, [refresh])
 
   // live events
   useEffect(() => {
@@ -173,12 +160,11 @@ export default function PoolDetail() {
     return () => { unsubs.forEach(u => u?.()) }
   }, [pub, poolId, refresh])
 
-  // my entries (premium touch)
+  // my entries (best-effort)
   useEffect(() => {
     if (!pub || !isConnected || !address) { setMyEntries(0); return }
     ;(async () => {
       try {
-        // Filter Entered logs for this pool and user
         const logs = await pub.getLogs({
           address: VAULT,
           event: {
@@ -195,7 +181,6 @@ export default function PoolDetail() {
           fromBlock: 0n,
           toBlock: 'latest',
         })
-        // sum quantities
         let sum = 0
         for (const l of logs) {
           const q = (l as any).args?.quantity as number | undefined
@@ -209,9 +194,10 @@ export default function PoolDetail() {
   }, [pub, address, isConnected, poolId])
 
   // derived
-  const entryPrice = useMemo(() => pool ? pool[7] : 0n, [pool]) // entryPrice
+  const entryPrice = useMemo(() => pool ? pool[7] : 0n, [pool])
   const deadline = useMemo(() => pool ? Number(pool[2]) : 0, [pool])
   const revealDeadline = useMemo(() => pool ? Number(pool[3]) : 0, [pool])
+  const sentinelRevealDeadline = useMemo(() => pool ? Number(pool[4]) : 0, [pool])
   const drawn = useMemo(() => pool ? pool[18] : false, [pool])
   const canceled = useMemo(() => pool ? pool[19] : false, [pool])
   const maxEntries = useMemo(() => pool ? pool[5] : 0, [pool])
@@ -219,7 +205,11 @@ export default function PoolDetail() {
   const remainingSlots = useMemo(() => Math.max(0, maxEntries - currentEntries), [maxEntries, currentEntries])
   const progress = pct(currentEntries, maxEntries)
   const afterDeadline = now >= deadline
-  const beforeReveal = now < revealDeadline
+  const beforeRevealEnd = now < revealDeadline
+  const revealOpen = now >= deadline && now < revealDeadline
+  const showEntryCountdown = !drawn && !canceled && now < deadline
+  const showRevealCountdown = !drawn && !canceled && revealOpen
+  const hasSentinel = useMemo(() => pool ? pool[12] !== '0x0000000000000000000000000000000000000000' : false, [pool])
   const totalCost = useMemo(() => entryPrice * BigInt(qty), [entryPrice, qty])
 
   // clamp qty when remainingSlots changes
@@ -348,6 +338,14 @@ export default function PoolDetail() {
   const isSentinel = address && pool[12]?.toLowerCase() === address.toLowerCase()
   const isWinner = address && pool[20] && pool[20].toLowerCase() === address.toLowerCase()
 
+  // phase badge
+  const phase =
+    canceled ? 'Canceled' :
+    drawn ? 'Drawn' :
+    now < deadline ? 'Entries Open' :
+    now < revealDeadline ? 'Reveal' :
+    'Awaiting Finalize'
+
   return (
     <main className="space-y-4">
       {/* header card */}
@@ -355,11 +353,12 @@ export default function PoolDetail() {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="text-lg font-semibold">Pool #{idStr}</div>
-            {chainId !== BASE_CHAIN_ID ? (
-              <span className="rounded-full px-2 py-0.5 text-xs bg-rose-500/20 text-rose-300">Wrong Network</span>
-            ) : (
-              <span className="rounded-full px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-300">Base</span>
-            )}
+            <span className={`rounded-full px-2 py-0.5 text-xs ${
+              chainId !== BASE_CHAIN_ID ? 'bg-rose-500/20 text-rose-300' : 'bg-emerald-500/20 text-emerald-300'
+            }`}>{chainId !== BASE_CHAIN_ID ? 'Wrong Network' : 'Base'}</span>
+            <span className="rounded-full px-2 py-0.5 text-xs bg-white/15 text-white/90 border border-white/20">
+              {phase}
+            </span>
             {isCreator && <RoleBadge>Creator</RoleBadge>}
             {isSentinel && <RoleBadge>Sentinel</RoleBadge>}
             {isWinner && <RoleBadge>Winner</RoleBadge>}
@@ -400,23 +399,48 @@ export default function PoolDetail() {
           </div>
         </div>
 
+        {/* key facts */}
         <div className="mt-3 grid sm:grid-cols-2 gap-3">
-          <KV label="Deadline" value={`${formatTs(Number(pool[2]))} • ${fmtCountdown(now, Number(pool[2]))}`} />
-          <KV label="Reveal by" value={`${formatTs(Number(pool[3]))} • ${fmtCountdown(now, Number(pool[3]))}`} />
-          <KV label="Entries" value={`${currentEntries} / ${maxEntries}`} />
+          <KV label="Entries close">
+            <div>
+              <div>{formatTs(Number(pool[2]))}</div>
+              {showEntryCountdown && (
+                <Countdown className="mt-1" target={Number(pool[2])} label="Entry closes in" showBar={false} />
+              )}
+            </div>
+          </KV>
+
+          <KV label="Reveal by">
+            <div>
+              <div>{formatTs(Number(pool[3]))}</div>
+              {showRevealCountdown && (
+                <Countdown className="mt-1" target={Number(pool[3])} label="Reveal ends in" showBar={false} />
+              )}
+            </div>
+          </KV>
+
+          {hasSentinel && (
+            <KV label="Sentinel reveal by">
+              <div>{formatTs(sentinelRevealDeadline)}</div>
+            </KV>
+          )}
+
           <KV label="Entry price" value={formatUsd(entryPrice)} />
+          <KV label="Entries" value={`${currentEntries} / ${maxEntries || '∞'}`} />
         </div>
 
         {/* progress bar */}
-        <div className="mt-3 h-2 w-full rounded-full bg-white/10">
-          <div
-            className="h-2 rounded-full bg-white/60"
-            style={{ width: `${progress}%` }}
-            aria-valuenow={progress}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          />
-        </div>
+        {maxEntries > 0 && (
+          <div className="mt-3 h-2 w-full rounded-full bg-white/10">
+            <div
+              className="h-2 rounded-full bg-white/60"
+              style={{ width: `${progress}%` }}
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            />
+          </div>
+        )}
 
         {prizes && (
           <div className="mt-3 text-slate-300 text-sm">
@@ -429,6 +453,13 @@ export default function PoolDetail() {
             {canceled ? 'Pool canceled.' : 'Winner already drawn.'}
           </div>
         )}
+
+        {drawn && pool[20] && (
+          <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
+            <div className="text-sm text-emerald-300">Winner</div>
+            <div className="font-mono text-sm break-all">{pool[20]}</div>
+          </div>
+        )}
       </div>
 
       {/* enter card */}
@@ -437,17 +468,37 @@ export default function PoolDetail() {
         <div className="flex flex-wrap items-end gap-3">
           <div className="space-y-1">
             <div className="text-slate-400 text-xs">Quantity</div>
-            <input
-              className="input max-w-[140px]"
-              type="number"
-              min={1}
-              max={Math.max(1, remainingSlots)}
-              value={qty}
-              onChange={(e) => {
-                const v = Math.floor(Number(e.target.value || 1))
-                setQty(isFinite(v) ? Math.min(Math.max(1, v), Math.max(1, remainingSlots)) : 1)
-              }}
-            />
+            <div className="flex items-center gap-2">
+              <button
+                className="btn-ghost px-3"
+                onClick={() => setQty(q => Math.max(1, q - 1))}
+                disabled={qty <= 1}
+              >–</button>
+              <input
+                className="input w-[110px] text-center"
+                type="number"
+                min={1}
+                max={Math.max(1, remainingSlots)}
+                value={qty}
+                onChange={(e) => {
+                  const v = Math.floor(Number(e.target.value || 1))
+                  setQty(isFinite(v) ? Math.min(Math.max(1, v), Math.max(1, remainingSlots)) : 1)
+                }}
+              />
+              <button
+                className="btn-ghost px-3"
+                onClick={() => setQty(q => Math.min(q + 1, Math.max(1, remainingSlots)))}
+                disabled={qty >= Math.max(1, remainingSlots)}
+              >+</button>
+              <button
+                className="btn-ghost"
+                onClick={() => setQty(Math.max(1, remainingSlots))}
+                disabled={remainingSlots <= 1}
+                title="Max available"
+              >
+                Max
+              </button>
+            </div>
             <div className="text-xs text-slate-400">Remaining: {remainingSlots}</div>
           </div>
 
@@ -486,12 +537,25 @@ export default function PoolDetail() {
       {/* reveal/finalize card */}
       <div className="card space-y-3">
         <h2>Reveal / Finalize</h2>
+
+        {/* reveal countdowns */}
+        {!drawn && !canceled && (
+          <div className="flex flex-wrap gap-4">
+            {showRevealCountdown && (
+              <Countdown target={revealDeadline} label="Creator reveal ends in" showBar={false} />
+            )}
+            {hasSentinel && now < sentinelRevealDeadline && (
+              <Countdown target={sentinelRevealDeadline} label="Sentinel reveal ends in" showBar={false} />
+            )}
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-2">
           <button
             className="btn"
             onClick={reveal}
-            disabled={busy || !isConnected || beforeReveal}
-            title={beforeReveal ? 'Reveal window not open yet' : undefined}
+            disabled={busy || !isConnected || !revealOpen}
+            title={!revealOpen ? 'Reveal window not open yet' : undefined}
           >
             Reveal (creator)
           </button>
@@ -512,11 +576,11 @@ export default function PoolDetail() {
 }
 
 // --- tiny presentational helpers ---
-function KV({ label, value }: { label: string; value: React.ReactNode }) {
+function KV({ label, value, children }: { label: string; value?: React.ReactNode; children?: React.ReactNode }) {
   return (
     <div className="space-y-1">
       <div className="text-slate-400 text-sm">{label}</div>
-      <div>{value}</div>
+      <div>{value ?? children}</div>
     </div>
   )
 }
