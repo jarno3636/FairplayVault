@@ -6,38 +6,35 @@ import { usePathname } from 'next/navigation'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { cn } from '@/lib/utils'
 import { useAccount } from 'wagmi'
-
-// ✅ admin wallets (lowercased)
-const ADMIN_ADDRESSES = [
-  '0xYourWalletHere'.toLowerCase(),
-  // '0xAnotherWalletIfNeeded'.toLowerCase()
-]
+import { isAdminAddress } from '@/lib/admin' // <- uses env var
 
 export default function Header() {
   const pathname = usePathname()
-  const [open, setOpen] = useState(false)
   const { address } = useAccount()
 
-  const isAdmin = !!address && ADMIN_ADDRESSES.includes(address.toLowerCase())
+  // Avoid any flash of the Fees link by only computing after mount
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
-  const nav = [
-    { href: '/', label: 'Home' },
-    ...(isAdmin ? [{ href: '/fees', label: 'Fees' }] : []), // 👈 only show for admins
-    { href: '/instructions', label: 'Instructions' },
-    { href: '/about', label: 'About' },
-  ]
+  const isAdmin = mounted && isAdminAddress(address)
+  const [open, setOpen] = useState(false)
 
-  // Close the menu when the route changes
+  // Close mobile menu on route change
   useEffect(() => { setOpen(false) }, [pathname])
 
   // Close on Escape
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false)
-    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false) }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+
+  const nav = [
+    { href: '/', label: 'Home' },
+    ...(isAdmin ? [{ href: '/fees', label: 'Fees' }] : []), // only for admins
+    { href: '/instructions', label: 'Instructions' },
+    { href: '/about', label: 'About' },
+  ]
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/70 backdrop-blur">
@@ -78,17 +75,10 @@ export default function Header() {
           onClick={() => setOpen((v) => !v)}
           className="ml-auto inline-flex items-center justify-center rounded-lg p-2 ring-1 ring-white/10 hover:bg-white/5 md:hidden"
         >
-          {/* Icon toggles between burger / X */}
-          <svg
-            className={cn('h-5 w-5', open ? 'hidden' : 'block')}
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-          >
+          <svg className={cn('h-5 w-5', open ? 'hidden' : 'block')} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
           </svg>
-          <svg
-            className={cn('h-5 w-5', open ? 'block' : 'hidden')}
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-          >
+          <svg className={cn('h-5 w-5', open ? 'block' : 'hidden')} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" d="M6 6l12 12M18 6l-12 12" />
           </svg>
         </button>
