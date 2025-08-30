@@ -6,7 +6,6 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import MiniAppBoot from '@/components/MiniAppBoot'
 
-// Use your public site URL for absolute OG/canonical URLs
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel.app').replace(/\/$/, '')
 
 export const metadata: Metadata = {
@@ -29,6 +28,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         alt: 'FairPlay Vault — Provably-fair USDC pools on Base',
+        type: 'image/png',
       },
     ],
   },
@@ -64,7 +64,10 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#0B1220',
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: '#0B1220' },
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+  ],
   width: 'device-width',
   initialScale: 1,
   colorScheme: 'dark',
@@ -105,6 +108,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        {/* PWA / Mobile polish */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="format-detection" content="telephone=no,email=no,address=no" />
+
+        {/* Explicit OG image type (some scrapers like it) */}
+        <meta property="og:image:type" content="image/png" />
+
+        {/* Preload key marketing assets (nice-to-have; will be ignored if cached) */}
+        <link rel="preload" as="image" href="/og.png" />
+        <link rel="preload" as="image" href="/icon-192.png" imagesrcset="/icon-192.png 1x, /icon-512.png 2x" />
+
         {/* Schema.org JSON-LD */}
         <script
           type="application/ld+json"
