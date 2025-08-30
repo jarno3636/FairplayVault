@@ -1,11 +1,12 @@
-{
+{{
   "accountAssociation": {
     "header": "eyJmaWQiOjExMjExOTMsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHhmNTYwMzNDMTkxYjY2NTA0QWQ0Q0Y4NzMyM0E3NzNGRDg2RGM1MGFkIn0",
     "payload": "eyJkb21haW4iOiJmYWlycGxheS12YXVsdC52ZXJjZWwuYXBwIn0",
     "signature": "MHhmN2E0ODdkODJiMzFmMjAyYmM5ODVkYTk1MTJiYjk4MDliNWMyYTY2YWQ3Njk0Mjg5M2U5MGU5Mzk1NDQ2MDIxNzNkMTg2MjczNGZhZDc2MGI4NzUzNmU4Mjc1MmNkNjQ5MGMzZmUzOTcyMmFhYWNkNWFjYzNiZDRiOTc3OTg4MTFi"
   },
   "miniapp": {
-    "version": "1",
+    "version": "1.0.1",
+    "updatedAt": "2025-08-30T00:00:00Z",
     "name": "FairPlay Vault",
     "homeUrl": "https://fairplay-vault.vercel.app/",
     "iconUrl": "https://fairplay-vault.vercel.app/icon-512.png",
