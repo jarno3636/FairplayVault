@@ -1,0 +1,19 @@
+{
+  "accountAssociation": {
+    "header": "<base64url JFS header>",
+    "payload": "<base64url payload with {\"domain\":\"fairplay-vault.vercel.app\"}>",
+    "signature": "<base64url signature>"
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "FairPlay Vault",
+    "homeUrl": "https://fairplay-vault.vercel.app/",
+    "iconUrl": "https://fairplay-vault.vercel.app/icon-512.png",
+    "splashImageUrl": "https://fairplay-vault.vercel.app/icon-192.png",
+    "splashBackgroundColor": "#0b1220",
+    "heroImageUrl": "https://fairplay-vault.vercel.app/og.png",
+    "primaryCategory": "finance",
+    "canonicalDomain": "fairplay-vault.vercel.app",
+    "description": "Create and join provably-fair commit–reveal USDC pools on Base."
+  }
+}
