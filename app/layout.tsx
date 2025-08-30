@@ -22,7 +22,9 @@ export const metadata: Metadata = {
     siteName: 'FairPlay Vault',
     title: 'FairPlay Vault',
     description: 'Provably-fair USDC pools on Base.',
-    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'FairPlay Vault — Provably-fair USDC pools on Base' }],
+    images: [
+      { url: '/og.png', width: 1200, height: 630, alt: 'FairPlay Vault — Provably-fair USDC pools on Base' },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
@@ -42,7 +44,13 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 },
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
   },
   applicationName: 'FairPlay Vault',
   category: 'finance',
@@ -70,49 +78,62 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
   }
 
-  // Primary embed (new spec)
-  const miniAppMeta = {
+  // If you can, make this a 3:2 image (e.g. /og-1200x800.png) and update the URL below.
+  const miniAppEmbed = {
     version: '1',
-    imageUrl: `${SITE}/og.png`,
+    imageUrl: `${SITE}/og.png?v=3`,
     button: {
-      title: 'Open FairPlay Vault',
+      title: 'FairPlay Vault',
       action: {
-        type: 'launch_miniapp',            // <- key change
+        type: 'launch_frame',
         name: 'FairPlay Vault',
-        url: `${SITE}/`,                   // optional; explicit is clearer
-        splashImageUrl: `${SITE}/icon-192.png`,
+        url: `${SITE}/`,
+        splashImageUrl: `${SITE}/icon-192.png?v=3`,
         splashBackgroundColor: '#0b1220',
       },
     },
   }
 
-  // Back-compat for older clients
-  const legacyFrameMeta = {
-    ...miniAppMeta,
-    button: {
-      ...miniAppMeta.button,
-      action: { ...miniAppMeta.button.action, type: 'launch_frame' },
-    },
-  }
+  // Back-compat embed for clients that still read fc:frame
+  const frameFallback = miniAppEmbed
 
   return (
     <html lang="en">
       <head>
+        {/* Preload key marketing assets */}
         <link rel="preload" as="image" href="/og.png" />
-        <link rel="preload" as="image" href="/icon-192.png" imageSrcSet="/icon-192.png 1x, /icon-512.png 2x" />
+        <link
+          rel="preload"
+          as="image"
+          href="/icon-192.png"
+          imageSrcSet="/icon-192.png 1x, /icon-512.png 2x"
+        />
 
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-        {/* New-spec mini app embed */}
-        <meta name="fc:miniapp" content={JSON.stringify(miniAppMeta)} />
-        {/* Legacy tag for clients that still read fc:frame */}
-        <meta name="fc:frame" content={JSON.stringify(legacyFrameMeta)} />
+        {/* Schema.org JSON-LD */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+
+        {/* Farcaster Mini App meta (primary) */}
+        <meta name="fc:miniapp" content={JSON.stringify(miniAppEmbed)} />
+        {/* Explicit domain hint (helps some clients map the cast) */}
+        <meta name="fc:miniapp:domain" content="fairplay-vault.vercel.app" />
+        {/* Backward compatibility for older clients */}
+        <meta name="fc:frame" content={JSON.stringify(frameFallback)} />
       </head>
       <body className="bg-slate-950 text-slate-100">
         <style>{`
-          :root { --safe-top: 0px; --safe-right: 0px; --safe-bottom: 0px; --safe-left: 0px; }
+          :root {
+            --safe-top: 0px;
+            --safe-right: 0px;
+            --safe-bottom: 0px;
+            --safe-left: 0px;
+          }
           header { padding-top: calc(0.75rem + var(--safe-top)); }
           footer { padding-bottom: calc(0.75rem + var(--safe-bottom)); }
         `}</style>
+
         <Providers>
           <MiniAppBoot />
           <Header />
