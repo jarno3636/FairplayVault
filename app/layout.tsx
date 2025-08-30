@@ -6,7 +6,6 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import MiniAppBoot from '@/components/MiniAppBoot'
 
-// Use your public site URL for absolute OG/canonical URLs
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel.app').replace(/\/$/, '')
 
 export const metadata: Metadata = {
@@ -23,9 +22,7 @@ export const metadata: Metadata = {
     siteName: 'FairPlay Vault',
     title: 'FairPlay Vault',
     description: 'Provably-fair USDC pools on Base.',
-    images: [
-      { url: '/og.png', width: 1200, height: 630, alt: 'FairPlay Vault — Provably-fair USDC pools on Base' },
-    ],
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'FairPlay Vault — Provably-fair USDC pools on Base' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -45,13 +42,7 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-      'max-video-preview': -1,
-    },
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 },
   },
   applicationName: 'FairPlay Vault',
   category: 'finance',
@@ -65,11 +56,9 @@ export const viewport: Viewport = {
   colorScheme: 'dark',
 }
 
-// Prevent static export from evaluating client hooks without context
 export const dynamic = 'force-dynamic'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // Schema.org JSON-LD
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
@@ -81,67 +70,49 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
   }
 
-  // Farcaster Mini App embed metadata (Mini App + legacy Frame fallback)
-  const miniAppEmbed = {
+  // Primary embed (new spec)
+  const miniAppMeta = {
     version: '1',
-    imageUrl: `${SITE}/og.png?v=4`,
+    imageUrl: `${SITE}/og.png`,
     button: {
       title: 'Open FairPlay Vault',
       action: {
-        type: 'launch_miniapp', // <- key change so Warpcast opens the app, not just the image
+        type: 'launch_miniapp',            // <- key change
         name: 'FairPlay Vault',
-        url: `${SITE}/`,
-        splashImageUrl: `${SITE}/icon-192.png?v=4`,
+        url: `${SITE}/`,                   // optional; explicit is clearer
+        splashImageUrl: `${SITE}/icon-192.png`,
         splashBackgroundColor: '#0b1220',
       },
     },
   }
 
-  const legacyFrameEmbed = {
-    ...miniAppEmbed,
+  // Back-compat for older clients
+  const legacyFrameMeta = {
+    ...miniAppMeta,
     button: {
-      ...miniAppEmbed.button,
-      action: { ...miniAppEmbed.button.action, type: 'launch_frame' }, // fallback for older clients
+      ...miniAppMeta.button,
+      action: { ...miniAppMeta.button.action, type: 'launch_frame' },
     },
   }
 
   return (
     <html lang="en">
       <head>
-        {/* Preload key marketing assets (nice-to-have; will be ignored if cached) */}
         <link rel="preload" as="image" href="/og.png" />
-        <link
-          rel="preload"
-          as="image"
-          href="/icon-192.png"
-          // React/TS requires camelCase:
-          imageSrcSet="/icon-192.png 1x, /icon-512.png 2x"
-        />
+        <link rel="preload" as="image" href="/icon-192.png" imageSrcSet="/icon-192.png 1x, /icon-512.png 2x" />
 
-        {/* Schema.org JSON-LD */}
-        <script
-          type="application/ld+json"
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-
-        {/* Farcaster embeds */}
-        <meta name="fc:miniapp" content={JSON.stringify(miniAppEmbed)} />
-        <meta name="fc:frame" content={JSON.stringify(legacyFrameEmbed)} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        {/* New-spec mini app embed */}
+        <meta name="fc:miniapp" content={JSON.stringify(miniAppMeta)} />
+        {/* Legacy tag for clients that still read fc:frame */}
+        <meta name="fc:frame" content={JSON.stringify(legacyFrameMeta)} />
       </head>
       <body className="bg-slate-950 text-slate-100">
-        {/* Optional safe-area CSS vars (MiniAppBoot sets these when embedded) */}
         <style>{`
-          :root {
-            --safe-top: 0px;
-            --safe-right: 0px;
-            --safe-bottom: 0px;
-            --safe-left: 0px;
-          }
+          :root { --safe-top: 0px; --safe-right: 0px; --safe-bottom: 0px; --safe-left: 0px; }
           header { padding-top: calc(0.75rem + var(--safe-top)); }
           footer { padding-bottom: calc(0.75rem + var(--safe-bottom)); }
         `}</style>
-
         <Providers>
           <MiniAppBoot />
           <Header />
