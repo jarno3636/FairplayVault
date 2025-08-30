@@ -22,14 +22,7 @@ export const metadata: Metadata = {
     siteName: 'FairPlay Vault',
     title: 'FairPlay Vault',
     description: 'Provably-fair USDC pools on Base.',
-    images: [
-      {
-        url: `${SITE}/og.png`,
-        width: 1200,
-        height: 630,
-        alt: 'FairPlay Vault — Provably-fair USDC pools on Base',
-      },
-    ],
+    images: [{ url: `${SITE}/og.png`, width: 1200, height: 630, alt: 'FairPlay Vault — Provably-fair USDC pools on Base' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -46,17 +39,7 @@ export const metadata: Metadata = {
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
   },
   manifest: '/site.webmanifest',
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-      'max-video-preview': -1,
-    },
-  },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 } },
   applicationName: 'FairPlay Vault',
   category: 'finance',
   other: { 'og:locale': 'en_US' },
@@ -72,7 +55,6 @@ export const viewport: Viewport = {
 export const dynamic = 'force-dynamic'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // Schema.org JSON-LD (basic)
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
@@ -84,54 +66,31 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
   }
 
-  // Farcaster Mini App embed metadata
-  // - imageUrl: square/landscape image shown in casts. Using 1200x800 card.
-  // - url: send users to /mini (your lightweight embed page).
   const miniAppEmbed = {
     version: '1',
-    imageUrl: `${SITE}/miniapp-card.png?v=4`,
+    imageUrl: `${SITE}/miniapp-card.png?v=6`,
     button: {
       title: 'FairPlay Vault',
       action: {
         type: 'launch_frame',
         name: 'FairPlay Vault',
-        url: `${SITE}/mini`,
-        splashImageUrl: `${SITE}/icon-192.png?v=4`,
+        url: `${SITE}/mini?v=6`,
+        splashImageUrl: `${SITE}/icon-192.png?v=6`,
         splashBackgroundColor: '#0b1220',
       },
     },
   }
 
-  // Back-compat for older clients that still read fc:frame
-  const frameFallback = miniAppEmbed
-
   return (
     <html lang="en">
       <head>
-        {/* Preload a couple of images to avoid first-cast blur */}
-        <link rel="preload" as="image" href={`${SITE}/miniapp-card.png`} />
-        <link rel="preload" as="image" href={`${SITE}/icon-192.png`} />
-
-        {/* Schema.org JSON-LD */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-
-        {/* Farcaster Mini App meta (primary) */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <meta name="fc:miniapp" content={JSON.stringify(miniAppEmbed)} />
         <meta name="fc:miniapp:domain" content="fairplay-vault.vercel.app" />
-        {/* Backward compatibility for older clients */}
-        <meta name="fc:frame" content={JSON.stringify(frameFallback)} />
       </head>
       <body className="bg-slate-950 text-slate-100">
         <style>{`
-          :root {
-            --safe-top: 0px;
-            --safe-right: 0px;
-            --safe-bottom: 0px;
-            --safe-left: 0px;
-          }
+          :root { --safe-top: 0px; --safe-right: 0px; --safe-bottom: 0px; --safe-left: 0px; }
           header { padding-top: calc(0.75rem + var(--safe-top)); }
           footer { padding-bottom: calc(0.75rem + var(--safe-bottom)); }
         `}</style>
