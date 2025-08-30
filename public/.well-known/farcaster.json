@@ -1,4 +1,4 @@
-{
+{{
   "accountAssociation": {
     "header": "eyJmaWQiOjExMjExOTMsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHhmNTYwMzNDMTkxYjY2NTA0QWQ0Q0Y4NzMyM0E3NzNGRDg2RGM1MGFkIn0",
     "payload": "eyJkb21haW4iOiJmYWlycGxheS12YXVsdC52ZXJjZWwuYXBwIn0",
@@ -7,7 +7,7 @@
   "miniapp": {
     "version": "1",
     "name": "FairPlay Vault",
-    "homeUrl": "https://fairplay-vault.vercel.app/mini",
+    "homeUrl": "https://fairplay-vault.vercel.app/mini?v=6",
     "iconUrl": "https://fairplay-vault.vercel.app/icon-512.png",
     "splashImageUrl": "https://fairplay-vault.vercel.app/icon-192.png",
     "splashBackgroundColor": "#0b1220",
