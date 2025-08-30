@@ -81,19 +81,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
   }
 
-  // Farcaster Mini App embed metadata (cache-busted assets)
-  const miniAppMeta = {
+  // Farcaster Mini App embed metadata (Mini App + legacy Frame fallback)
+  const miniAppEmbed = {
     version: '1',
-    imageUrl: `${SITE}/og.png?v=3`,
+    imageUrl: `${SITE}/og.png?v=4`,
     button: {
-      title: 'FairPlay Vault',
+      title: 'Open FairPlay Vault',
       action: {
-        type: 'launch_frame',
+        type: 'launch_miniapp', // <- key change so Warpcast opens the app, not just the image
         name: 'FairPlay Vault',
         url: `${SITE}/`,
-        splashImageUrl: `${SITE}/icon-192.png?v=3`,
+        splashImageUrl: `${SITE}/icon-192.png?v=4`,
         splashBackgroundColor: '#0b1220',
       },
+    },
+  }
+
+  const legacyFrameEmbed = {
+    ...miniAppEmbed,
+    button: {
+      ...miniAppEmbed.button,
+      action: { ...miniAppEmbed.button.action, type: 'launch_frame' }, // fallback for older clients
     },
   }
 
@@ -116,8 +124,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {/* Farcaster Mini App meta (serialized JSON) */}
-        <meta name="fc:miniapp" content={JSON.stringify(miniAppMeta)} />
+
+        {/* Farcaster embeds */}
+        <meta name="fc:miniapp" content={JSON.stringify(miniAppEmbed)} />
+        <meta name="fc:frame" content={JSON.stringify(legacyFrameEmbed)} />
       </head>
       <body className="bg-slate-950 text-slate-100">
         {/* Optional safe-area CSS vars (MiniAppBoot sets these when embedded) */}
