@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react'
 
 /**
- * Optional Farcaster Mini Apps bootstrap.
- * - Loads @farcaster/miniapp-sdk at runtime (no hard dependency).
- * - Detects Mini App environment.
- * - Calls actions.ready()
- * - Exposes context + CSS safe-area vars.
+ * Optional Farcaster Mini App bootstrap.
+ * - Dynamically loads @farcaster/frame-sdk (no hard dependency).
+ * - Detects Mini App/Frame environment.
+ * - Calls actions.ready() if available.
+ * - Reads context (safe-area insets) and exposes CSS vars.
  */
 export default function MiniAppBoot() {
   const [isMiniApp, setIsMiniApp] = useState(false)
@@ -16,34 +16,51 @@ export default function MiniAppBoot() {
     let cancelled = false
 
     ;(async () => {
-      // Only in browser
       if (typeof window === 'undefined') return
 
-      // Try to import the SDK if available (won’t crash if not installed)
-      let sdk: any
+      // Try to import the Farcaster SDK if present.
+      let frame: any | null = null
       try {
-        const mod = await import(/* webpackIgnore: true */ '@farcaster/miniapp-sdk')
-        sdk = mod.sdk || mod.default?.sdk || mod
+        const mod: any = await import('@farcaster/frame-sdk')
+        // Handle various export shapes gracefully
+        frame = mod?.frame || mod?.default || mod
       } catch {
-        // SDK not present — just bail silently
+        // SDK not installed — this component is strictly optional.
         return
       }
+      if (!frame) return
 
       try {
-        // Detect whether we’re actually inside a Mini App
-        const inMini = await sdk.isInMiniApp?.()
+        // Environment detection (support older/newer SDK shapes)
+        const inMini =
+          (typeof frame.isMiniApp === 'function' && (await frame.isMiniApp())) ||
+          (typeof frame.isFrame === 'function' && (await frame.isFrame())) ||
+          (typeof frame?.sdk?.isMiniApp === 'function' && (await frame.sdk.isMiniApp())) ||
+          false
+
         if (cancelled) return
         if (!inMini) return
 
         setIsMiniApp(true)
 
-        // Let the host know we’re ready
-        if (sdk.actions?.ready) await sdk.actions.ready()
+        // Signal readiness to the host, if supported
+        const readyFn =
+          frame?.sdk?.actions?.ready ||
+          frame?.actions?.ready ||
+          frame?.ready
+        if (typeof readyFn === 'function') {
+          await readyFn()
+        }
 
-        // Read context for safe area insets, etc.
-        const ctx = sdk.context
-        if (ctx?.client?.safeAreaInsets) {
-          const { top, right, bottom, left } = ctx.client.safeAreaInsets
+        // Read context for safe-area insets (if provided)
+        const ctx =
+          frame?.context ||
+          frame?.sdk?.context ||
+          null
+
+        const insets = ctx?.client?.safeAreaInsets
+        if (insets && typeof document !== 'undefined') {
+          const { top = 0, right = 0, bottom = 0, left = 0 } = insets
           const root = document.documentElement
           root.style.setProperty('--safe-top', `${top}px`)
           root.style.setProperty('--safe-right', `${right}px`)
@@ -51,16 +68,18 @@ export default function MiniAppBoot() {
           root.style.setProperty('--safe-left', `${left}px`)
         }
 
-        // (Optional) expose on window for quick debugging
+        // Optional: expose for quick debugging
         ;(window as any).__miniapp = { context: ctx }
       } catch {
-        // Ignore — mini app features are strictly optional
+        // Ignore — mini app features are optional
       }
     })()
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [])
 
-  // You could render nothing, or a tiny banner in mini-apps if you want:
+  // No UI needed; tweak if you want a banner in-frame.
   return isMiniApp ? null : null
 }
