@@ -5,7 +5,7 @@
     "signature": "MHhmN2E0ODdkODJiMzFmMjAyYmM5ODVkYTk1MTJiYjk4MDliNWMyYTY2YWQ3Njk0Mjg5M2U5MGU5Mzk1NDQ2MDIxNzNkMTg2MjczNGZhZDc2MGI4NzUzNmU4Mjc1MmNkNjQ5MGMzZmUzOTcyMmFhYWNkNWFjYzNiZDRiOTc3OTg4MTFi"
   },
   "miniapp": {
-    "version": "1.0.1",
+    "version": "0.0.1",
     "name": "FairPlay Vault",
     "homeUrl": "https://fairplay-vault.vercel.app/",
     "iconUrl": "https://fairplay-vault.vercel.app/icon-512.png",
