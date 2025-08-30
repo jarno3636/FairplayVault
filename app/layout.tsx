@@ -4,10 +4,10 @@ import './globals.css'
 import Providers from './providers'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import MiniAppBoot from '@/components/MiniAppBoot' // <- optional, safe lazy boot
 
 // Use your public site URL for absolute OG/canonical URLs
-const SITE =
-  (process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel.app').replace(/\/$/, '')
+const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel.app').replace(/\/$/, '')
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
@@ -15,8 +15,7 @@ export const metadata: Metadata = {
     default: 'FairPlay Vault — Provably-fair USDC pools on Base',
     template: '%s — FairPlay Vault',
   },
-  description:
-    'Create and join commit–reveal USDC pools on Base. Transparent, no VRF required.',
+  description: 'Create and join commit–reveal USDC pools on Base. Transparent, no VRF required.',
   alternates: { canonical: SITE },
   openGraph: {
     type: 'website',
@@ -75,6 +74,7 @@ export const viewport: Viewport = {
 export const dynamic = 'force-dynamic'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Schema.org JSON-LD
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
@@ -115,7 +115,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="fc:miniapp" content={JSON.stringify(miniAppMeta)} />
       </head>
       <body className="bg-slate-950 text-slate-100">
+        {/* Optional safe-area CSS vars (MiniAppBoot sets these when embedded) */}
+        <style>{`
+          :root {
+            --safe-top: 0px;
+            --safe-right: 0px;
+            --safe-bottom: 0px;
+            --safe-left: 0px;
+          }
+          header { padding-top: calc(0.75rem + var(--safe-top)); }
+          footer { padding-bottom: calc(0.75rem + var(--safe-bottom)); }
+        `}</style>
+
         <Providers>
+          <MiniAppBoot /> {/* optional, harmless if SDK not installed or not in a mini app */}
           <Header />
           <main className="min-h-screen">{children}</main>
           <Footer />
