@@ -86,14 +86,33 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
   }
 
+  // Farcaster Mini App embed metadata (for casts & discovery)
+  const miniAppMeta = {
+    version: '1',
+    imageUrl: `${SITE}/og.png`,
+    button: {
+      title: 'FairPlay Vault',
+      action: {
+        type: 'launch_frame',
+        name: 'FairPlay Vault',
+        url: `${SITE}/`,
+        splashImageUrl: `${SITE}/icon-192.png`,
+        splashBackgroundColor: '#0b1220',
+      },
+    },
+  }
+
   return (
     <html lang="en">
       <head>
+        {/* Schema.org JSON-LD */}
         <script
           type="application/ld+json"
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {/* Farcaster Mini App meta (serialized JSON) */}
+        <meta name="fc:miniapp" content={JSON.stringify(miniAppMeta)} />
       </head>
       <body className="bg-slate-950 text-slate-100">
         <Providers>
