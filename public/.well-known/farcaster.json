@@ -5,13 +5,13 @@
     "signature": "MHhmN2E0ODdkODJiMzFmMjAyYmM5ODVkYTk1MTJiYjk4MDliNWMyYTY2YWQ3Njk0Mjg5M2U5MGU5Mzk1NDQ2MDIxNzNkMTg2MjczNGZhZDc2MGI4NzUzNmU4Mjc1MmNkNjQ5MGMzZmUzOTcyMmFhYWNkNWFjYzNiZDRiOTc3OTg4MTFi"
   },
   "miniapp": {
-    "version": "0.0.1",
+    "version": "1",
     "name": "FairPlay Vault",
-    "homeUrl": "https://fairplay-vault.vercel.app/",
+    "homeUrl": "https://fairplay-vault.vercel.app/mini",
     "iconUrl": "https://fairplay-vault.vercel.app/icon-512.png",
     "splashImageUrl": "https://fairplay-vault.vercel.app/icon-192.png",
     "splashBackgroundColor": "#0b1220",
-    "heroImageUrl": "https://fairplay-vault.vercel.app/og.png",
+    "heroImageUrl": "https://fairplay-vault.vercel.app/miniapp-card.png",
     "primaryCategory": "finance",
     "canonicalDomain": "fairplay-vault.vercel.app",
     "description": "Create and join provably-fair commit–reveal USDC pools on Base."
