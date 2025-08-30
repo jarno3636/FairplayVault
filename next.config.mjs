@@ -5,24 +5,21 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: '/:path*',
         headers: [
-          // Do NOT set X-Frame-Options (leave it out completely)
+          // DO NOT set X-Frame-Options at all (it overrides frame-ancestors)
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          // Allow Warpcast + Farcaster Mini Apps to iframe your site
+
+          // Allow Warpcast/Farcaster and (optionally) your Vercel preview URLs to iframe your app
           {
             key: 'Content-Security-Policy',
             value: [
-              "frame-ancestors 'self'",
-              'https://warpcast.com',
-              'https://*.warpcast.com',
-              'https://farcaster.xyz',
-              'https://*.farcaster.xyz',
-              'https://miniapps.farcaster.xyz',
-              'https://farcaster-mini-apps.web.app',
-            ].join(' ') + ';'
+              "default-src 'self';",
+              // allow frames from Warpcast / Farcaster
+              "frame-ancestors 'self' https://warpcast.com https://*.warpcast.com https://farcaster.xyz https://*.farcaster.xyz;",
+            ].join(' ')
           }
         ]
       }
