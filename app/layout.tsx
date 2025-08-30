@@ -4,7 +4,7 @@ import './globals.css'
 import Providers from './providers'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import MiniAppBoot from '@/components/MiniAppBoot' // <- optional, safe lazy boot
+import MiniAppBoot from '@/components/MiniAppBoot'
 
 // Use your public site URL for absolute OG/canonical URLs
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel.app').replace(/\/$/, '')
@@ -86,17 +86,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
   }
 
-  // Farcaster Mini App embed metadata (for casts & discovery)
+  // Farcaster Mini App embed metadata (cache-busted assets)
   const miniAppMeta = {
     version: '1',
-    imageUrl: `${SITE}/og.png`,
+    imageUrl: `${SITE}/og.png?v=3`,
     button: {
       title: 'FairPlay Vault',
       action: {
         type: 'launch_frame',
         name: 'FairPlay Vault',
         url: `${SITE}/`,
-        splashImageUrl: `${SITE}/icon-192.png`,
+        splashImageUrl: `${SITE}/icon-192.png?v=3`,
         splashBackgroundColor: '#0b1220',
       },
     },
@@ -128,7 +128,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}</style>
 
         <Providers>
-          <MiniAppBoot /> {/* optional, harmless if SDK not installed or not in a mini app */}
+          <MiniAppBoot />
           <Header />
           <main className="min-h-screen">{children}</main>
           <Footer />
