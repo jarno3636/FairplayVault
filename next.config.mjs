@@ -1,23 +1,28 @@
-/// next.config.mjs
+// next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  swcMinify: true,
+  output: 'standalone',
 
-  // Speeds up bundle by tree-shaking these libs
-  experimental: { optimizePackageImports: ['viem', 'wagmi'] },
+  // Optional: safe defaults; add any remote image hosts you actually use
+  images: {
+    domains: ['warpcast.com', 'imagedelivery.net', 'res.cloudinary.com', 'fairplay-vault.vercel.app'],
+    remotePatterns: [{ protocol: 'https', hostname: '**' }],
+  },
 
   async headers() {
     return [
-      // ---- Default security + embed policy (site-wide) ----
+      // Global headers (no X-Frame-Options; rely on CSP)
       {
-        source: '/:path*',
+        source: '/(.*)',
         headers: [
-          // DO NOT set X-Frame-Options (would block embedding)
+          // ❗ Do NOT set X-Frame-Options (omit it or browsers may prefer it over CSP)
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
 
-          // Allow Warpcast/Farcaster to iframe your app
+          // Allow embedding inside Warpcast + Farcaster
           {
             key: 'Content-Security-Policy',
             value:
@@ -26,30 +31,50 @@ const nextConfig = {
         ],
       },
 
-      // ---- Cache the Mini App card & OG images aggressively (bust with ?v=) ----
-      {
-        source: '/:file(og|miniapp-card)\\.png',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
-
-      // ---- Cache app icons strongly too ----
-      {
-        source: '/:file(icon-192|icon-512|apple-touch-icon|favicon-32x32|favicon-16x16)\\.png',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
-
-      // ---- Farcaster well-known manifest: short cache so updates propagate ----
+      // Make sure the farcaster manifest is served as JSON and cacheable
       {
         source: '/.well-known/farcaster.json',
         headers: [
-          { key: 'Cache-Control', value: 'public, max-age=300, s-maxage=300' },
-          { key: 'Content-Type', value: 'application/json; charset=utf-8' },
+          { key: 'Content-Type', value: 'application/json' },
+          { key: 'Cache-Control', value: 'public, max-age=300' },
         ],
       },
+
+      // Optional: discourage search engines on the mini landing (not required)
+      {
+        source: '/mini',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex,follow' }],
+      },
+    ]
+  },
+
+  // Keep webpack minimal; no Node polyfills on client
+  webpack: (config) => {
+    config.resolve = config.resolve || {}
+    config.resolve.fallback = {
+      ...(config.resolve.fallback || {}),
+      fs: false,
+      net: false,
+      tls: false,
+    }
+    return config
+  },
+
+  env: {
+    NEXT_PUBLIC_APP_NAME: 'FairPlay Vault',
+    NEXT_PUBLIC_APP_VERSION: '1.0.0',
+  },
+
+  experimental: {
+    // You’re already using this pattern elsewhere
+    optimizePackageImports: ['viem', 'wagmi'],
+    esmExternals: true,
+  },
+
+  async redirects() {
+    return [
+      // Handy cleanups if you ever need them; safe to remove
+      { source: '/home', destination: '/', permanent: true },
     ]
   },
 }
