@@ -1,4 +1,7 @@
-import { NextRequest } from 'next/server'
+// app/api/frame/route.ts
+import { NextRequest, NextResponse } from 'next/server'
+
+export const runtime = 'edge' // faster static HTML in Vercel
 
 // --- helpers ---------------------------------------------------------------
 function getBaseUrl(req: NextRequest) {
@@ -9,16 +12,19 @@ function getBaseUrl(req: NextRequest) {
   return `${proto}://${host}`.replace(/\/$/, '')
 }
 
-// tiny clamps/sanitizers (only used inside meta tags)
 const clamp = (s = '', n = 80) => String(s).replace(/\s+/g, ' ').slice(0, n)
 const sanitizeScreen = (s?: string | null) =>
   (s || 'home').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 24) || 'home'
 
-// parse POST body (Warpcast can send string or json)
+// POST body may be JSON or raw string; parse safely
 async function parseBody(req: NextRequest) {
-  const raw = await req.text()
-  if (!raw) return {}
-  try { return JSON.parse(raw) } catch { return {} }
+  try {
+    const raw = await req.text()
+    if (!raw) return {}
+    return JSON.parse(raw)
+  } catch {
+    return {}
+  }
 }
 
 function htmlFor(opts: {
@@ -30,7 +36,6 @@ function htmlFor(opts: {
 }) {
   const { title, image, pageUrl, postUrl, buttons } = opts
 
-  // Build button meta set
   const btnMeta = buttons
     .map((b, i) => {
       const idx = i + 1
@@ -69,62 +74,35 @@ function htmlFor(opts: {
 }
 
 // screen registry (title, image, web page)
-function screenConfig(baseUrl: string, screen: string) {
-  // You can replace these image paths with real artwork:
-  // put files in /public/og/...
-  const og = (name: string) => `${baseUrl}/og/${name}.png`
+function screenConfig(baseUrl: string, screen: string, v: string) {
+  // If you haven't created /public/og/*.png, this fallback always exists:
+  const card = `${baseUrl}/miniapp-card.png?v=${encodeURIComponent(v)}`
+  const og = (name: string) => `${baseUrl}/og/${name}.png?v=${encodeURIComponent(v)}`
 
   switch (screen) {
     case 'pools':
-      return {
-        title: 'FairPlay Vault — Recent Pools',
-        image: og('pools'),              // e.g. public/og/pools.png (1200x630)
-        pageUrl: `${baseUrl}/#recent`,
-      }
+      return { title: 'FairPlay Vault — Recent Pools', image: og('pools'), pageUrl: `${baseUrl}/#recent` }
     case 'create':
-      return {
-        title: 'FairPlay Vault — Create a Pool',
-        image: og('create'),             // e.g. public/og/create.png
-        pageUrl: `${baseUrl}/#create`,
-      }
+      return { title: 'FairPlay Vault — Create a Pool', image: og('create'), pageUrl: `${baseUrl}/#create` }
     case 'products':
-      return {
-        title: 'FairPlay Vault — Products & SDK',
-        image: og('products'),
-        pageUrl: `${baseUrl}/products`,
-      }
+      return { title: 'FairPlay Vault — Products & SDK', image: og('products'), pageUrl: `${baseUrl}/products` }
     case 'instructions':
-      return {
-        title: 'FairPlay Vault — Instructions',
-        image: og('instructions'),
-        pageUrl: `${baseUrl}/instructions`,
-      }
+      return { title: 'FairPlay Vault — Instructions', image: og('instructions'), pageUrl: `${baseUrl}/instructions` }
     case 'about':
-      return {
-        title: 'FairPlay Vault — About',
-        image: og('about'),
-        pageUrl: `${baseUrl}/about`,
-      }
+      return { title: 'FairPlay Vault — About', image: og('about'), pageUrl: `${baseUrl}/about` }
     case 'home':
     default:
-      return {
-        title: 'FairPlay Vault — Provably-fair USDC pools on Base',
-        // Use your 1200x800 card if you like; Warpcast letterboxes fine.
-        image: `${baseUrl}/miniapp-card.png`,
-        pageUrl: `${baseUrl}/`,
-      }
+      return { title: 'FairPlay Vault — Provably-fair USDC pools on Base', image: card, pageUrl: `${baseUrl}/` }
   }
 }
 
-function buildButtons(baseUrl: string, screen: string) {
-  // Button 1 always opens the Mini App (inside Warpcast)
+function buildButtons(baseUrl: string, screen: string, v: string) {
   const openMiniBtn = {
     label: 'Open in Mini App',
     action: 'post_redirect' as const,
-    target: `${baseUrl}/mini?from=frame&screen=${encodeURIComponent(screen)}`,
+    target: `${baseUrl}/mini?from=frame&screen=${encodeURIComponent(screen)}&v=${encodeURIComponent(v)}`,
   }
 
-  // Secondary buttons switch in-cast screens (POST back to this endpoint)
   const navButtons: Record<string, Array<{ label: string }>> = {
     home:        [{ label: 'Browse Pools' }, { label: 'Create Pool' }],
     pools:       [{ label: 'Create Pool' },  { label: 'Products' }],
@@ -137,16 +115,13 @@ function buildButtons(baseUrl: string, screen: string) {
 
   return [
     openMiniBtn,
-    // #2 and #3: in-frame nav (we’ll map clicks in POST)
     { label: fallbacks[0].label, action: 'post' as const },
     { label: fallbacks[1].label, action: 'post' as const },
   ]
 }
 
-// map a secondary button click -> new screen
 function routeButton(screen: string, buttonIndex: number) {
   if (buttonIndex === 2) {
-    // second button
     const map: Record<string, string> = {
       home: 'pools',
       pools: 'create',
@@ -158,7 +133,6 @@ function routeButton(screen: string, buttonIndex: number) {
     return map[screen] || 'pools'
   }
   if (buttonIndex === 3) {
-    // third button
     const map: Record<string, string> = {
       home: 'create',
       pools: 'products',
@@ -169,21 +143,43 @@ function routeButton(screen: string, buttonIndex: number) {
     }
     return map[screen] || 'create'
   }
-  // button 1 is post_redirect to /mini; we never re-render for it
-  return screen
+  return screen // #1 is post_redirect
 }
 
 // --- handlers --------------------------------------------------------------
+export async function HEAD(req: NextRequest) {
+  // Some crawlers do a HEAD first; respond with same headers as GET
+  const baseUrl = getBaseUrl(req)
+  const search = req.nextUrl.searchParams
+  const screen = sanitizeScreen(search.get('screen'))
+  const v = search.get('v') || '9'
+
+  const { title, image, pageUrl } = screenConfig(baseUrl, screen, v)
+  const postUrl = `${baseUrl}/api/frame?screen=${encodeURIComponent(screen)}&v=${encodeURIComponent(v)}`
+  const buttons = buildButtons(baseUrl, screen, v)
+
+  const body = htmlFor({ title, image, pageUrl, postUrl, buttons })
+  return new NextResponse(body, {
+    status: 200,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'public, s-maxage=300, stale-while-revalidate=86400',
+    },
+  })
+}
+
 export async function GET(req: NextRequest) {
   const baseUrl = getBaseUrl(req)
   const search = req.nextUrl.searchParams
   const screen = sanitizeScreen(search.get('screen'))
-  const { title, image, pageUrl } = screenConfig(baseUrl, screen)
-  const postUrl = `${baseUrl}/api/frame?screen=${encodeURIComponent(screen)}`
-  const buttons = buildButtons(baseUrl, screen)
+  const v = search.get('v') || '9'
 
-  const html = htmlFor({ title, image, pageUrl, postUrl, buttons })
-  return new Response(html, {
+  const { title, image, pageUrl } = screenConfig(baseUrl, screen, v)
+  const postUrl = `${baseUrl}/api/frame?screen=${encodeURIComponent(screen)}&v=${encodeURIComponent(v)}`
+  const buttons = buildButtons(baseUrl, screen, v)
+
+  const body = htmlFor({ title, image, pageUrl, postUrl, buttons })
+  return new NextResponse(body, {
     status: 200,
     headers: {
       'content-type': 'text/html; charset=utf-8',
@@ -196,23 +192,20 @@ export async function POST(req: NextRequest) {
   const baseUrl = getBaseUrl(req)
   const search = req.nextUrl.searchParams
   const screen = sanitizeScreen(search.get('screen'))
+  const v = search.get('v') || '9'
 
   const body = await parseBody(req)
-  // Warpcast sends button index as untrustedData.buttonIndex
-  const btn =
-    Number(body?.untrustedData?.buttonIndex) ||
-    Number(body?.buttonIndex) ||
-    0
+  const rawIndex =
+    (body && Number((body.untrustedData?.buttonIndex as any) ?? (body.buttonIndex as any))) || 0
+  const btnIndex = Number.isFinite(rawIndex) ? Number(rawIndex) : 0
 
-  // If user pressed #2/#3, switch screens in-frame
-  const nextScreen = routeButton(screen, btn)
+  const nextScreen = routeButton(screen, btnIndex)
+  const { title, image, pageUrl } = screenConfig(baseUrl, nextScreen, v)
+  const postUrl = `${baseUrl}/api/frame?screen=${encodeURIComponent(nextScreen)}&v=${encodeURIComponent(v)}`
+  const buttons = buildButtons(baseUrl, nextScreen, v)
 
-  const { title, image, pageUrl } = screenConfig(baseUrl, nextScreen)
-  const postUrl = `${baseUrl}/api/frame?screen=${encodeURIComponent(nextScreen)}`
-  const buttons = buildButtons(baseUrl, nextScreen)
-
-  const html = htmlFor({ title, image, pageUrl, postUrl, buttons })
-  return new Response(html, {
+  const out = htmlFor({ title, image, pageUrl, postUrl, buttons })
+  return new NextResponse(out, {
     status: 200,
     headers: {
       'content-type': 'text/html; charset=utf-8',
