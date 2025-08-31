@@ -1,27 +1,43 @@
-// app/mini/page.tsx
+// app/mini/head.tsx
+export default function MiniHead() {
+  const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel.app').replace(/\/$/, '')
 
-export const dynamic = 'force-static' // keep lightweight & crawler-friendly
+  const miniAppMeta = {
+    version: '1',
+    imageUrl: `${SITE}/miniapp-card.png?v=4`,
+    button: {
+      title: 'FairPlay Vault',
+      action: {
+        type: 'launch_frame',
+        name: 'FairPlay Vault',
+        url: `${SITE}/mini`,
+        splashImageUrl: `${SITE}/icon-192.png?v=4`,
+        splashBackgroundColor: '#0b1220',
+      },
+    },
+  }
 
-export default function MiniLanding() {
   return (
-    <main className="min-h-[60vh] grid place-items-center p-6 text-center bg-slate-950 text-slate-100">
-      <div>
-        <h1 className="text-2xl font-semibold">FairPlay Vault Mini App</h1>
-        <p className="mt-2 text-slate-400">
-          If you’re seeing this page, you opened the embed URL directly in a browser.
-        </p>
-        <a
-          href="/"
-          className="btn mt-4 inline-block rounded-lg bg-cyan-500 px-4 py-2 text-white hover:bg-cyan-400"
-        >
-          Open Full App
-        </a>
-        <noscript>
-          <p className="mt-3 text-xs text-slate-500">
-            Enable JavaScript to use the app.
-          </p>
-        </noscript>
-      </div>
-    </main>
+    <>
+      <title>FairPlay Vault — Mini App</title>
+      <meta name="description" content="Create and join provably-fair commit–reveal USDC pools on Base." />
+
+      {/* Farcaster Mini App meta for this route */}
+      <meta name="fc:miniapp" content={JSON.stringify(miniAppMeta)} />
+      <meta name="fc:miniapp:domain" content="fairplay-vault.vercel.app" />
+      {/* Back-compat */}
+      <meta name="fc:frame" content={JSON.stringify(miniAppMeta)} />
+
+      {/* Nice-to-have OG/Twitter for the /mini URL */}
+      <meta property="og:title" content="FairPlay Vault" />
+      <meta property="og:description" content="Provably-fair USDC pools on Base." />
+      <meta property="og:image" content={`${SITE}/miniapp-card.png?v=4`} />
+      <meta property="og:url" content={`${SITE}/mini`} />
+      <meta property="og:type" content="website" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="FairPlay Vault" />
+      <meta name="twitter:description" content="Provably-fair USDC pools on Base." />
+      <meta name="twitter:image" content={`${SITE}/miniapp-card.png?v=4`} />
+    </>
   )
 }
