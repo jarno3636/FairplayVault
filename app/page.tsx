@@ -8,8 +8,7 @@ export const dynamic = 'force-dynamic'
 
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel.app').replace(/\/$/, '')
 
-// Optional: a stable link to your Farcaster mini app listing page
-// If you have a canonical miniapp page, put it here:
+// Farcaster Mini App directory listing (stable public URL)
 const FARCASTER_MINIAPP_URL = 'https://farcaster.xyz/miniapps/cnbD1kBSXDHR/fairplay-vault'
 
 // Coinbase Wallet deep link (opens your dapp directly)
@@ -46,7 +45,7 @@ export default function Home() {
               Explore Products & SDK
             </Link>
 
-            {/* NEW: Farcaster & Coinbase entry points */}
+            {/* Farcaster & Coinbase entry points */}
             <a
               href={FARCASTER_MINIAPP_URL}
               target="_blank"
@@ -58,12 +57,14 @@ export default function Home() {
               <Send className="h-4 w-4" aria-hidden="true" />
               Open in Farcaster
             </a>
+
             <a
               href={CBW_DEEPLINK}
               className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-200 hover:bg-emerald-400/15"
               aria-label="Open in Coinbase Wallet"
               title="Open in Coinbase Wallet"
             >
+              {/* Coinbase glyph (decorative) */}
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="h-4 w-4" aria-hidden="true">
                 <path fill="#0052FF" d="M24 4C12.954 4 4 12.954 4 24s8.954 20 20 20 20-8.954 20-20S35.046 4 24 4zm8 22h-6v6h-4v-6h-6v-4h6v-6h4v6h6v4z"/>
               </svg>
@@ -220,7 +221,9 @@ function Step({ n, title, points }: { n: number; title: string; points: string[]
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
       <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-400/20 text-cyan-300 ring-1 ring-cyan-400/30">{n}</div>
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-400/20 text-cyan-300 ring-1 ring-cyan-400/30">
+          {n}
+        </div>
         <div className="font-medium">{title}</div>
       </div>
       <ul className="mt-2 list-disc pl-6 text-sm text-slate-300">
