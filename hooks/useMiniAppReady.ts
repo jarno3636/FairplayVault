@@ -29,12 +29,11 @@ export function useMiniAppReady() {
   const inFC = useMemo(detectFarcaster, [])
 
   useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout> | undefined
+    let timeoutId: number | undefined
 
     ;(async () => {
       try {
         if (inFC && typeof window !== 'undefined') {
-          // Try frame SDK first (lighter); fallback to old miniapp SDK
           const mod =
             (await import('@farcaster/frame-sdk').catch(() => null)) ||
             (await import('@farcaster/miniapp-sdk').catch(() => null))
@@ -45,7 +44,6 @@ export function useMiniAppReady() {
             (mod as any)?.default ||
             mod
 
-          // find a ready() somewhere
           const readyFn =
             sdk?.actions?.ready ??
             sdk?.ready ??
@@ -56,7 +54,10 @@ export function useMiniAppReady() {
             typeof readyFn === 'function' ? readyFn() : Promise.resolve()
 
           // 1200ms timeout so we don’t hang the UI
-          const timeout = new Promise((resolve) => { timeoutId = setTimeout(resolve, 1200) })
+          const timeout = new Promise((resolve) => {
+            timeoutId = window.setTimeout(resolve, 1200)
+          })
+
           await Promise.race([readyPromise, timeout])
         }
         if (mountedRef.current) setIsReady(true)
@@ -64,10 +65,10 @@ export function useMiniAppReady() {
         console.error('MiniApp ready failed:', e)
         if (mountedRef.current) {
           setError(e)
-          setIsReady(true) // still proceed with web fallback
+          setIsReady(true)
         }
       } finally {
-        if (timeoutId) clearTimeout(timeoutId)
+        if (timeoutId !== undefined) window.clearTimeout(timeoutId)
       }
     })()
   }, [inFC])
