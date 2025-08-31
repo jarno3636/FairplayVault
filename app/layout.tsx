@@ -66,27 +66,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
   }
 
-  const miniAppEmbed = {
-    version: '1',
-    imageUrl: `${SITE}/miniapp-card.png?v=6`,
-    button: {
-      title: 'FairPlay Vault',
-      action: {
-        type: 'launch_frame',
-        name: 'FairPlay Vault',
-        url: `${SITE}/mini?v=6`,
-        splashImageUrl: `${SITE}/icon-192.png?v=6`,
-        splashBackgroundColor: '#0b1220',
-      },
-    },
-  }
-
   return (
     <html lang="en">
       <head>
+        {/* Regular SEO only (no Farcaster meta here) */}
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-        <meta name="fc:miniapp" content={JSON.stringify(miniAppEmbed)} />
-        <meta name="fc:miniapp:domain" content="fairplay-vault.vercel.app" />
       </head>
       <body className="bg-slate-950 text-slate-100">
         <style>{`
