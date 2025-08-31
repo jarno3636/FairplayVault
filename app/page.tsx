@@ -15,25 +15,48 @@ const FARCASTER_MINIAPP_URL = 'https://farcaster.xyz/miniapps/cnbD1kBSXDHR/fairp
 // Coinbase Wallet deep link (opens your dapp directly)
 const CBW_DEEPLINK = `cbwallet://dapp?url=${encodeURIComponent(`${SITE}/`)}`
 
-// ---- Per-page embed so Warpcast renders a Mini App card for "/" ----
+// ---- Per-page embed so Warpcast renders both a Frame and a Mini App card for "/" ----
+const frameMeta = {
+  'fc:frame': 'vNext',
+  'fc:frame:image': `${SITE}/miniapp-card.png`,
+  'fc:frame:post_url': `${SITE}/api/frame?screen=home`,
+
+  // simple 2-button example; your /api/frame handler already supports navigation.
+  'fc:frame:button:1': 'Open',
+  'fc:frame:button:1:action': 'post',
+  'fc:frame:button:2': 'Shuffle',
+  'fc:frame:button:2:action': 'post',
+}
+
 const miniAppEmbed = {
   version: '1',
-  imageUrl: `${SITE}/miniapp-card.png?v=9`, // your 1200x800 card
+  imageUrl: `${SITE}/miniapp-card.png`,
   button: {
     title: 'FairPlay Vault',
     action: {
       type: 'launch_frame',
       name: 'FairPlay Vault',
-      url: `${SITE}/mini`,                // the URL to open inside Warpcast
-      splashImageUrl: `${SITE}/icon-192.png?v=9`,
+      url: `${SITE}/mini`,
+      splashImageUrl: `${SITE}/icon-192.png`,
       splashBackgroundColor: '#0b1220',
     },
   },
 }
 
-// This renders <meta name="fc:miniapp" ...> just for "/"
+// This renders <meta ...> tags for both Frame and Mini App right on "/"
 export const metadata: Metadata = {
+  openGraph: {
+    title: 'FairPlay Vault — Provably-fair USDC pools on Base',
+    description: 'Create and join commit–reveal USDC pools on Base. Transparent, no VRF required.',
+    url: SITE,
+    images: [{ url: `${SITE}/miniapp-card.png`, width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: [`${SITE}/miniapp-card.png`],
+  },
   other: {
+    ...frameMeta,
     'fc:miniapp': JSON.stringify(miniAppEmbed),
     'fc:miniapp:domain': 'fairplay-vault.vercel.app',
   },
@@ -63,10 +86,7 @@ export default function Home() {
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link href="#create" className="btn">Create a Pool</Link>
             <Link href="#recent" className="btn-secondary">Browse Pools</Link>
-            <Link
-              href="/products"
-              className="rounded-xl border border-white/15 px-4 py-2 text-sm hover:bg-white/5"
-            >
+            <Link href="/products" className="rounded-xl border border-white/15 px-4 py-2 text-sm hover:bg-white/5">
               Explore Products & SDK
             </Link>
 
@@ -89,7 +109,6 @@ export default function Home() {
               aria-label="Open in Coinbase Wallet"
               title="Open in Coinbase Wallet"
             >
-              {/* Coinbase glyph (decorative) */}
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="h-4 w-4" aria-hidden="true">
                 <path fill="#0052FF" d="M24 4C12.954 4 4 12.954 4 24s8.954 20 20 20 20-8.954 20-20S35.046 4 24 4zm8 22h-6v6h-4v-6h-6v-4h6v-6h4v6h6v4z"/>
               </svg>
@@ -187,7 +206,7 @@ export default function Home() {
       <section id="recent" className="space-y-3" aria-labelledby="recent-pools">
         <div className="flex items-center justify-between">
           <h2 id="recent-pools" className="text-xl font-semibold">Recent Pools</h2>
-          <Link
+        <Link
             href="/products"
             className="text-sm text-cyan-300 underline decoration-cyan-300/40 hover:text-cyan-200"
           >
