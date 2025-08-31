@@ -4,17 +4,15 @@
     "payload": "eyJkb21haW4iOiJmYWlycGxheS12YXVsdC52ZXJjZWwuYXBwIn0",
     "signature": "MHhmN2E0ODdkODJiMzFmMjAyYmM5ODVkYTk1MTJiYjk4MDliNWMyYTY2YWQ3Njk0Mjg5M2U5MGU5Mzk1NDQ2MDIxNzNkMTg2MjczNGZhZDc2MGI4NzUzNmU4Mjc1MmNkNjQ5MGMzZmUzOTcyMmFhYWNkNWFjYzNiZDRiOTc3OTg4MTFi"
   },
-  "miniapp": {
+  "frame": {
     "version": "1",
     "name": "FairPlay Vault",
-    "homeUrl": "https://fairplay-vault.vercel.app/mini?v=8",
+    "homeUrl": "https://fairplay-vault.vercel.app/api/frame?screen=home&v=8",
     "iconUrl": "https://fairplay-vault.vercel.app/icon-512.png",
+    "imageUrl": "https://fairplay-vault.vercel.app/miniapp-card.png?v=8",
+    "buttonTitle": "Open FairPlay",
     "splashImageUrl": "https://fairplay-vault.vercel.app/icon-192.png",
     "splashBackgroundColor": "#0b1220",
-    "imageUrl": "https://fairplay-vault.vercel.app/miniapp-card.png?v=8",
-    "heroImageUrl": "https://fairplay-vault.vercel.app/miniapp-card.png?v=8",
-    "primaryCategory": "finance",
-    "canonicalDomain": "fairplay-vault.vercel.app",
-    "description": "Create and join provably-fair commit–reveal USDC pools on Base."
+    "webhookUrl": "https://fairplay-vault.vercel.app/api/frame?screen=home&v=8"
   }
 }
