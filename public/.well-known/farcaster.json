@@ -7,11 +7,11 @@
   "miniapp": {
     "version": "1",
     "name": "FairPlay Vault",
-    "homeUrl": "https://fairplay-vault.vercel.app/mini?v=9",
+    "homeUrl": "https://fairplay-vault.vercel.app",
     "iconUrl": "https://fairplay-vault.vercel.app/icon-512.png",
     "splashImageUrl": "https://fairplay-vault.vercel.app/icon-192.png",
     "splashBackgroundColor": "#0b1220",
-    "heroImageUrl": "https://fairplay-vault.vercel.app/miniapp-card.png?v=9",
+    "heroImageUrl": "https://fairplay-vault.vercel.app/miniapp-card.png",
     "primaryCategory": "finance",
     "canonicalDomain": "fairplay-vault.vercel.app",
     "description": "Create and join provably-fair commit–reveal USDC pools on Base."
@@ -19,11 +19,11 @@
   "frame": {
     "version": "1",
     "name": "FairPlay Vault",
-    "homeUrl": "https://fairplay-vault.vercel.app/mini?v=9",
+    "homeUrl": "https://fairplay-vault.vercel.app",
     "iconUrl": "https://fairplay-vault.vercel.app/icon-512.png",
     "splashImageUrl": "https://fairplay-vault.vercel.app/icon-192.png",
     "splashBackgroundColor": "#0b1220",
-    "heroImageUrl": "https://fairplay-vault.vercel.app/miniapp-card.png?v=9",
+    "heroImageUrl": "https://fairplay-vault.vercel.app/miniapp-card.png",
     "primaryCategory": "finance",
     "canonicalDomain": "fairplay-vault.vercel.app",
     "description": "Create and join provably-fair commit–reveal USDC pools on Base."
