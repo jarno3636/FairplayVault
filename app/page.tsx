@@ -1,4 +1,5 @@
 // app/page.tsx
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { CheckCircle2, Shield, Timer, Ticket, Layers, Send } from 'lucide-react'
 import CreatePoolCard from '@/components/CreatePoolCard'
@@ -13,6 +14,30 @@ const FARCASTER_MINIAPP_URL = 'https://farcaster.xyz/miniapps/cnbD1kBSXDHR/fairp
 
 // Coinbase Wallet deep link (opens your dapp directly)
 const CBW_DEEPLINK = `cbwallet://dapp?url=${encodeURIComponent(`${SITE}/`)}`
+
+// ---- Per-page embed so Warpcast renders a Mini App card for "/" ----
+const miniAppEmbed = {
+  version: '1',
+  imageUrl: `${SITE}/miniapp-card.png?v=9`, // your 1200x800 card
+  button: {
+    title: 'FairPlay Vault',
+    action: {
+      type: 'launch_frame',
+      name: 'FairPlay Vault',
+      url: `${SITE}/mini`,                // the URL to open inside Warpcast
+      splashImageUrl: `${SITE}/icon-192.png?v=9`,
+      splashBackgroundColor: '#0b1220',
+    },
+  },
+}
+
+// This renders <meta name="fc:miniapp" ...> just for "/"
+export const metadata: Metadata = {
+  other: {
+    'fc:miniapp': JSON.stringify(miniAppEmbed),
+    'fc:miniapp:domain': 'fairplay-vault.vercel.app',
+  },
+}
 
 export default function Home() {
   return (
