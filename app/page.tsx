@@ -1,7 +1,7 @@
 // app/page.tsx
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { CheckCircle2, Shield, Timer, Ticket, Layers, Send } from 'lucide-react'
+import { CheckCircle2, Shield, Timer, Ticket, Layers } from 'lucide-react'
 import CreatePoolCard from '@/components/CreatePoolCard'
 import PoolList from '@/components/PoolList'
 
@@ -9,41 +9,10 @@ export const dynamic = 'force-dynamic'
 
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel.app').replace(/\/$/, '')
 
-// Farcaster Mini App directory listing (stable public URL)
-const FARCASTER_MINIAPP_URL = 'https://farcaster.xyz/miniapps/cnbD1kBSXDHR/fairplay-vault'
-
 // Coinbase Wallet deep link (opens your dapp directly)
 const CBW_DEEPLINK = `cbwallet://dapp?url=${encodeURIComponent(`${SITE}/`)}`
 
-// ---- Per-page embed so Warpcast renders both a Frame and a Mini App card for "/" ----
-const frameMeta = {
-  'fc:frame': 'vNext',
-  'fc:frame:image': `${SITE}/miniapp-card.png`,
-  'fc:frame:post_url': `${SITE}/api/frame?screen=home`,
-
-  // simple 2-button example; your /api/frame handler already supports navigation.
-  'fc:frame:button:1': 'Open',
-  'fc:frame:button:1:action': 'post',
-  'fc:frame:button:2': 'Shuffle',
-  'fc:frame:button:2:action': 'post',
-}
-
-const miniAppEmbed = {
-  version: '1',
-  imageUrl: `${SITE}/miniapp-card.png`,
-  button: {
-    title: 'FairPlay Vault',
-    action: {
-      type: 'launch_frame',
-      name: 'FairPlay Vault',
-      url: `${SITE}/mini`,
-      splashImageUrl: `${SITE}/icon-192.png`,
-      splashBackgroundColor: '#0b1220',
-    },
-  },
-}
-
-// This renders <meta ...> tags for both Frame and Mini App right on "/"
+// Page metadata (no Farcaster tags)
 export const metadata: Metadata = {
   openGraph: {
     title: 'FairPlay Vault — Provably-fair USDC pools on Base',
@@ -54,11 +23,6 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     images: [`${SITE}/miniapp-card.png`],
-  },
-  other: {
-    ...frameMeta,
-    'fc:miniapp': JSON.stringify(miniAppEmbed),
-    'fc:miniapp:domain': 'fairplay-vault.vercel.app',
   },
 }
 
@@ -90,25 +54,14 @@ export default function Home() {
               Explore Products & SDK
             </Link>
 
-            {/* Farcaster & Coinbase entry points */}
-            <a
-              href={FARCASTER_MINIAPP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-xl border border-violet-400/30 bg-violet-400/10 px-4 py-2 text-sm text-violet-200 hover:bg-violet-400/15"
-              aria-label="Open in Farcaster Mini Apps"
-              title="Open in Farcaster Mini Apps"
-            >
-              <Send className="h-4 w-4" aria-hidden="true" />
-              Open in Farcaster
-            </a>
-
+            {/* Coinbase entry point */}
             <a
               href={CBW_DEEPLINK}
               className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-200 hover:bg-emerald-400/15"
               aria-label="Open in Coinbase Wallet"
               title="Open in Coinbase Wallet"
             >
+              {/* Coinbase glyph (decorative) */}
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="h-4 w-4" aria-hidden="true">
                 <path fill="#0052FF" d="M24 4C12.954 4 4 12.954 4 24s8.954 20 20 20 20-8.954 20-20S35.046 4 24 4zm8 22h-6v6h-4v-6h-6v-4h6v-6h4v6h6v4z"/>
               </svg>
@@ -206,7 +159,7 @@ export default function Home() {
       <section id="recent" className="space-y-3" aria-labelledby="recent-pools">
         <div className="flex items-center justify-between">
           <h2 id="recent-pools" className="text-xl font-semibold">Recent Pools</h2>
-        <Link
+          <Link
             href="/products"
             className="text-sm text-cyan-300 underline decoration-cyan-300/40 hover:text-cyan-200"
           >
