@@ -72,6 +72,18 @@ function copy(str: string) {
   )
 }
 
+// Simple X glyph
+function XIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path
+        d="M18.36 2H21l-6.77 7.74L22 22h-6.9l-4.5-5.9L4.54 22H2l7.24-8.27L2 2h6.9l4.11 5.41L18.36 2Zm-2.41 18h1.84L8.2 4H6.36l9.59 16Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
+
 // ---------- page ----------
 export default function PoolDetail() {
   // params
@@ -354,12 +366,69 @@ export default function PoolDetail() {
     now < revealDeadline ? 'Reveal' :
     'Awaiting Finalize'
 
+  // --------- DYNAMIC / FUN X SHARE ---------
+  const prizeStr = prizes ? formatUsd(prizes[0]) : null
+  const priceStr = entryPrice ? formatUsd(entryPrice) : null
+
+  function makeTweetText() {
+    const bits: string[] = []
+    // playful lead-ins per phase
+    if (canceled) {
+      bits.push(`Pool #${idStr} was canceled 🤷‍♂️ on @base`)
+    } else if (drawn) {
+      bits.push(`Pool #${idStr} just drew a winner 🎉 on @base`)
+    } else if (now < deadline) {
+      bits.push(`I'm jumping into Pool #${idStr} 🎟️ on @base`)
+    } else if (now < revealDeadline) {
+      bits.push(`Reveal time for Pool #${idStr} 🔐 on @base`)
+    } else {
+      bits.push(`Wrapping up Pool #${idStr} ⏳ on @base`)
+    }
+
+    // tasty details
+    if (priceStr) bits.push(`Entry: ${priceStr}`)
+    if (prizeStr) bits.push(`Prize: ${prizeStr}`)
+    if (!canceled && !drawn) {
+      bits.push(`${currentEntries}${!unlimited ? `/${maxEntries}` : ''} entries`)
+    }
+
+    // brand tag
+    bits.push('#FairPlayVault')
+
+    // Final line with URL added via ?url param (composer also supports &url=)
+    const text = bits.join(' · ')
+    return text
+  }
+
+  function openXShare() {
+    const text = makeTweetText()
+    const url = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
+  async function shareNativeOrCopy() {
+    const text = makeTweetText()
+    // Try Web Share (nice on mobile)
+    try {
+      // @ts-ignore — older lib defs
+      if (navigator.share) {
+        // @ts-ignore
+        await navigator.share({ title: `Pool #${idStr} on Base`, text, url: shareUrl })
+        return
+      }
+    } catch {
+      // fall through to copy
+    }
+    copy(`${text}\n${shareUrl}`)
+  }
+  // -----------------------------------------
+
   return (
     <main className="space-y-4">
       {/* header card */}
       <div className="card">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="text-lg font-semibold">Pool #{idStr}</div>
             <span className={`rounded-full px-2 py-0.5 text-xs ${
               chainId !== BASE_CHAIN_ID ? 'bg-rose-500/20 text-rose-300' : 'bg-emerald-500/20 text-emerald-300'
@@ -378,22 +447,29 @@ export default function PoolDetail() {
           </div>
 
           <div className="flex items-center gap-2 text-sm">
+            {/* New: fun share buttons */}
+            <button
+              className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 hover:bg-white/10"
+              onClick={openXShare}
+              title="Post to X"
+            >
+              <XIcon className="h-4 w-4" />
+              Post to X
+            </button>
+
             <button
               className="link"
-              onClick={() => {
-                if ((navigator as any).share) {
-                  (navigator as any).share({ title: `Pool #${idStr}`, url: shareUrl }).catch(() => copy(shareUrl))
-                } else {
-                  copy(shareUrl)
-                }
-              }}
+              onClick={shareNativeOrCopy}
+              title="Share or copy link"
             >
               Share
             </button>
+
             <a
               className="link"
               href={`${process.env.NEXT_PUBLIC_EXPLORER || 'https://basescan.org'}/address/${VAULT}`}
               target="_blank"
+              rel="noreferrer"
             >
               Vault
             </a>
@@ -401,6 +477,7 @@ export default function PoolDetail() {
               className="link"
               href={`${process.env.NEXT_PUBLIC_EXPLORER || 'https://basescan.org'}/token/${USDC}`}
               target="_blank"
+              rel="noreferrer"
             >
               USDC
             </a>
