@@ -7,25 +7,19 @@
   "frame": {
     "version": "1",
     "name": "FairPlay Vault",
-    "homeUrl": "https://fairplay-vault.vercel.app",         // ← open your web app root
+    "homeUrl": "https://fairplay-vault.vercel.app",
     "iconUrl": "https://fairplay-vault.vercel.app/icon-512.png",
-    "imageUrl": "https://fairplay-vault.vercel.app/miniapp-card.png",  // preview card
+    "imageUrl": "https://fairplay-vault.vercel.app/miniapp-card.png",
     "splashImageUrl": "https://fairplay-vault.vercel.app/icon-192.png",
     "splashBackgroundColor": "#0b1220",
-
-    // Open Graph shown in Base App directory / listing:
     "ogTitle": "FairPlay Vault — Provably-fair USDC pools on Base",
     "ogDescription": "Create and join commit–reveal USDC pools on Base. Transparent, no VRF required.",
     "ogImageUrl": "https://fairplay-vault.vercel.app/og.png",
-
-    // (Recommended) help Base App filter/rank
     "requiredChains": ["eip155:8453"],
     "tags": ["finance", "base", "usdc"],
-
-    // Optional routing: if you want the *embed* click to go to a lighter route:
     "webhookUrl": "https://fairplay-vault.vercel.app/api/frame"
   },
   "baseBuilder": {
-    "allowedAddresses": []   // optional; add your deployer addr if/when needed
+    "allowedAddresses": []
   }
 }
