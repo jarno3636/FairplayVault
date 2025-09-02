@@ -4,28 +4,28 @@
     "payload": "eyJkb21haW4iOiJmYWlycGxheS12YXVsdC52ZXJjZWwuYXBwIn0",
     "signature": "MHhmN2E0ODdkODJiMzFmMjAyYmM5ODVkYTk1MTJiYjk4MDliNWMyYTY2YWQ3Njk0Mjg5M2U5MGU5Mzk1NDQ2MDIxNzNkMTg2MjczNGZhZDc2MGI4NzUzNmU4Mjc1MmNkNjQ5MGMzZmUzOTcyMmFhYWNkNWFjYzNiZDRiOTc3OTg4MTFi"
   },
-  "miniapp": {
-    "version": "1",
-    "name": "FairPlay Vault",
-    "homeUrl": "https://fairplay-vault.vercel.app",
-    "iconUrl": "https://fairplay-vault.vercel.app/icon-512.png",
-    "splashImageUrl": "https://fairplay-vault.vercel.app/icon-192.png",
-    "splashBackgroundColor": "#0b1220",
-    "heroImageUrl": "https://fairplay-vault.vercel.app/miniapp-card.png",
-    "primaryCategory": "finance",
-    "canonicalDomain": "fairplay-vault.vercel.app",
-    "description": "Create and join provably-fair commit–reveal USDC pools on Base."
-  },
   "frame": {
     "version": "1",
     "name": "FairPlay Vault",
-    "homeUrl": "https://fairplay-vault.vercel.app",
+    "homeUrl": "https://fairplay-vault.vercel.app",         // ← open your web app root
     "iconUrl": "https://fairplay-vault.vercel.app/icon-512.png",
+    "imageUrl": "https://fairplay-vault.vercel.app/miniapp-card.png",  // preview card
     "splashImageUrl": "https://fairplay-vault.vercel.app/icon-192.png",
     "splashBackgroundColor": "#0b1220",
-    "heroImageUrl": "https://fairplay-vault.vercel.app/miniapp-card.png",
-    "primaryCategory": "finance",
-    "canonicalDomain": "fairplay-vault.vercel.app",
-    "description": "Create and join provably-fair commit–reveal USDC pools on Base."
+
+    // Open Graph shown in Base App directory / listing:
+    "ogTitle": "FairPlay Vault — Provably-fair USDC pools on Base",
+    "ogDescription": "Create and join commit–reveal USDC pools on Base. Transparent, no VRF required.",
+    "ogImageUrl": "https://fairplay-vault.vercel.app/og.png",
+
+    // (Recommended) help Base App filter/rank
+    "requiredChains": ["eip155:8453"],
+    "tags": ["finance", "base", "usdc"],
+
+    // Optional routing: if you want the *embed* click to go to a lighter route:
+    "webhookUrl": "https://fairplay-vault.vercel.app/api/frame"
+  },
+  "baseBuilder": {
+    "allowedAddresses": []   // optional; add your deployer addr if/when needed
   }
 }
