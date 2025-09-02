@@ -12,16 +12,7 @@ const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel
 // Coinbase Wallet deep link (opens your dapp directly)
 const CBW_DEEPLINK = `cbwallet://dapp?url=${encodeURIComponent(`${SITE}/`)}`
 
-/**
- * Farcaster embeds (Mini App + Frame) for the homepage URL ("/")
- * - Mini App: single JSON string in <meta name="fc:miniapp">
- * - Frame vNext: we set the "flag" <meta name="fc:frame" content="vNext"> and
- *   additionally provide JSON config in <meta name="fc:frame:config"> so Warpcast
- *   has the image, post_url and buttons without visiting /api/frame.
- *
- * NOTE: Using meta *name* is correct for the Mini App embed per docs.
- * Warpcast accepts name="fc:frame" as flag + name="fc:frame:config" for config.
- */
+// Mini App JSON (rendered as a single meta tag)
 const fcMiniApp = {
   version: '1',
   imageUrl: `${SITE}/miniapp-card.png`,
@@ -30,21 +21,11 @@ const fcMiniApp = {
     action: {
       type: 'launch_frame',
       name: 'FairPlay Vault',
-      url: `${SITE}/mini`,                 // the in-app URL to open
+      url: `${SITE}/mini`,
       splashImageUrl: `${SITE}/icon-192.png`,
       splashBackgroundColor: '#0b1220',
     },
   },
-}
-
-const fcFrameConfig = {
-  image: `${SITE}/miniapp-card.png`,      // 1200x630/800 works
-  post_url: `${SITE}/api/frame?screen=home`,
-  buttons: [
-    { title: 'Open in App', action: 'post_redirect', target: `${SITE}/mini?from=frame&screen=home` },
-    { title: 'Browse Pools', action: 'post' },
-    { title: 'Create Pool', action: 'post' },
-  ],
 }
 
 // Page metadata (+ Farcaster tags)
@@ -60,15 +41,25 @@ export const metadata: Metadata = {
     images: [`${SITE}/miniapp-card.png`],
   },
   other: {
-    // Mini App embed (JSON string)
+    // ----- Frame vNext (explicit tags) -----
+    'fc:frame': 'vNext',
+    'fc:frame:image': `${SITE}/miniapp-card.png`,
+    'fc:frame:post_url': `${SITE}/api/frame?screen=home`,
+
+    // Buttons
+    'fc:frame:button:1': 'Open in App',
+    'fc:frame:button:1:action': 'post_redirect',
+    'fc:frame:button:1:target': `${SITE}/mini?from=frame&screen=home`,
+
+    'fc:frame:button:2': 'Browse Pools',
+    'fc:frame:button:2:action': 'post',
+
+    'fc:frame:button:3': 'Create Pool',
+    'fc:frame:button:3:action': 'post',
+
+    // ----- Mini App embed -----
     'fc:miniapp': JSON.stringify(fcMiniApp),
     'fc:miniapp:domain': 'fairplay-vault.vercel.app',
-
-    // Frame vNext embed:
-    // Flag that this page has a vNext frame
-    'fc:frame': 'vNext',
-    // Provide the config separately as JSON (Warpcast reads this)
-    'fc:frame:config': JSON.stringify(fcFrameConfig),
   },
 }
 
