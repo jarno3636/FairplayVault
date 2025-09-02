@@ -1,16 +1,13 @@
-/** @type {import('next').NextConfig} */
+// next.config.mjs (or .js)
 const nextConfig = {
-  reactStrictMode: true,
-  experimental: { optimizePackageImports: ['viem', 'wagmi'] },
   async headers() {
     return [
       {
         source: '/.well-known/farcaster.json',
         headers: [
           { key: 'Content-Type', value: 'application/json' },
-          // low TTL so updates propagate fast; adjust later if you like
-          { key: 'Cache-Control', value: 'public, max-age=120, s-maxage=120' },
-        ],
+          { key: 'Cache-Control', value: 'public, max-age=60' }
+        ]
       },
       {
         source: '/(.*)',
@@ -20,12 +17,11 @@ const nextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
           {
             key: 'Content-Security-Policy',
-            value:
-              "frame-ancestors 'self' https://warpcast.com https://*.warpcast.com https://farcaster.xyz https://*.farcaster.xyz;"
-          },
-        ],
-      },
+            value: "frame-ancestors 'self' https://warpcast.com https://*.warpcast.com https://farcaster.xyz https://*.farcaster.xyz;"
+          }
+        ]
+      }
     ]
-  },
+  }
 }
 export default nextConfig
