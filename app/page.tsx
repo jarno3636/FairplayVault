@@ -12,7 +12,23 @@ const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel
 // Coinbase Wallet deep link (opens your dapp directly)
 const CBW_DEEPLINK = `cbwallet://dapp?url=${encodeURIComponent(`${SITE}/`)}`
 
-// Page metadata (no Farcaster tags)
+// ---------- Farcaster meta (Mini App + Frame) ----------
+const miniAppEmbed = {
+  version: '1',
+  imageUrl: `${SITE}/miniapp-card.png`,
+  button: {
+    title: 'FairPlay Vault',
+    action: {
+      type: 'launch_frame',
+      name: 'FairPlay Vault',
+      url: `${SITE}/mini`,
+      splashImageUrl: `${SITE}/icon-192.png`,
+      splashBackgroundColor: '#0b1220',
+    },
+  },
+}
+
+// Page metadata (adds Farcaster tags)
 export const metadata: Metadata = {
   openGraph: {
     title: 'FairPlay Vault — Provably-fair USDC pools on Base',
@@ -23,6 +39,20 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     images: [`${SITE}/miniapp-card.png`],
+  },
+  other: {
+    // Mini App embed (directory & cast card)
+    'fc:miniapp': JSON.stringify(miniAppEmbed),
+    'fc:miniapp:domain': 'fairplay-vault.vercel.app',
+
+    // Lightweight Frame meta so casts resolve as a Frame too
+    'fc:frame': 'vNext',
+    'fc:frame:image': `${SITE}/miniapp-card.png`,
+    'fc:frame:post_url': `${SITE}/api/frame?screen=home`,
+    'fc:frame:button:1': 'Open',
+    'fc:frame:button:1:action': 'post',
+    'fc:frame:button:2': 'Shuffle',
+    'fc:frame:button:2:action': 'post',
   },
 }
 
