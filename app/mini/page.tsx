@@ -18,7 +18,6 @@ function detectFarcaster() {
     const ua = navigator.userAgent || ''
     const inWarpcastUA = /Warpcast/i.test(ua)
     const inIframe = window.self !== window.top
-    // Treat iframe as hint — many previews/validators do this
     return Boolean(inWarpcastUA || inIframe)
   } catch {
     return false
@@ -27,7 +26,10 @@ function detectFarcaster() {
 
 export default function MiniEntry() {
   const search = useSearchParams()
-  const screen = (search.get('screen') || 'home').toLowerCase()
+  // ✅ TS-safe: handle potential null during type narrowing
+  const screenParam = search?.get('screen') ?? 'home'
+  const screen = screenParam.toLowerCase()
+
   const [isReady, setIsReady] = useState(false)
   const [sdkOk, setSdkOk] = useState(false)
   const isInFarcaster = useMemo(detectFarcaster, [])
@@ -46,7 +48,7 @@ export default function MiniEntry() {
         }
         const mod = await import('@farcaster/miniapp-sdk').catch(() => null)
         // Support both common shapes
-        let sdk: any = mod?.sdk
+        let sdk: any = (mod as any)?.sdk
         if (!sdk) {
           const Ctor = (mod as any)?.default || (mod as any)?.MiniAppSDK
           if (typeof Ctor === 'function') {
@@ -62,7 +64,7 @@ export default function MiniEntry() {
               : Promise.resolve()
 
         const timeout = new Promise<void>((resolve) => {
-          timer = setTimeout(() => resolve(), 1200) // don’t hang if SDK is absent
+          timer = setTimeout(() => resolve(), 1200)
         })
 
         await Promise.race([readyPromise, timeout])
@@ -73,7 +75,7 @@ export default function MiniEntry() {
       } catch {
         if (!cancelled) {
           setSdkOk(false)
-          setIsReady(true) // still render web fallback
+          setIsReady(true)
         }
       } finally {
         if (timer) clearTimeout(timer)
@@ -91,7 +93,7 @@ export default function MiniEntry() {
       screen === 'create' ? 'mini-create' :
       screen === 'pools'  ? 'mini-pools'  :
       'mini-home'
-    const el = document.getElementById(id)
+    const el = typeof document !== 'undefined' ? document.getElementById(id) : null
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [isReady, screen])
 
@@ -155,7 +157,7 @@ export default function MiniEntry() {
             href="/products"
             className="text-sm text-cyan-300 underline decoration-cyan-300/40 hover:text-cyan-200"
           >
-            Widgets & SDK →
+            Widgets &amp; SDK →
           </Link>
         </div>
         <div className="rounded-xl border border-white/10 bg-white/5 p-3">
