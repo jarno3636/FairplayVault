@@ -12,23 +12,7 @@ const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel
 // Coinbase Wallet deep link (opens your dapp directly)
 const CBW_DEEPLINK = `cbwallet://dapp?url=${encodeURIComponent(`${SITE}/`)}`
 
-// Mini App JSON (rendered as a single meta tag)
-const fcMiniApp = {
-  version: '1',
-  imageUrl: `${SITE}/miniapp-card.png`,
-  button: {
-    title: 'FairPlay Vault',
-    action: {
-      type: 'launch_frame',
-      name: 'FairPlay Vault',
-      url: `${SITE}/mini`,
-      splashImageUrl: `${SITE}/icon-192.png`,
-      splashBackgroundColor: '#0b1220',
-    },
-  },
-}
-
-// Page metadata (+ Farcaster tags)
+// Page metadata (OG/Twitter only — Farcaster tags are in app/head.tsx)
 export const metadata: Metadata = {
   openGraph: {
     title: 'FairPlay Vault — Provably-fair USDC pools on Base',
@@ -39,27 +23,6 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     images: [`${SITE}/miniapp-card.png`],
-  },
-  other: {
-    // ----- Frame vNext (explicit tags) -----
-    'fc:frame': 'vNext',
-    'fc:frame:image': `${SITE}/miniapp-card.png`,
-    'fc:frame:post_url': `${SITE}/api/frame?screen=home`,
-
-    // Buttons
-    'fc:frame:button:1': 'Open in App',
-    'fc:frame:button:1:action': 'post_redirect',
-    'fc:frame:button:1:target': `${SITE}/mini?from=frame&screen=home`,
-
-    'fc:frame:button:2': 'Browse Pools',
-    'fc:frame:button:2:action': 'post',
-
-    'fc:frame:button:3': 'Create Pool',
-    'fc:frame:button:3:action': 'post',
-
-    // ----- Mini App embed -----
-    'fc:miniapp': JSON.stringify(fcMiniApp),
-    'fc:miniapp:domain': 'fairplay-vault.vercel.app',
   },
 }
 
