@@ -12,8 +12,17 @@ const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel
 // Coinbase Wallet deep link (opens your dapp directly)
 const CBW_DEEPLINK = `cbwallet://dapp?url=${encodeURIComponent(`${SITE}/`)}`
 
-// ---------- Farcaster meta (Mini App + Frame) ----------
-const miniAppEmbed = {
+/**
+ * Farcaster embeds (Mini App + Frame) for the homepage URL ("/")
+ * - Mini App: single JSON string in <meta name="fc:miniapp">
+ * - Frame vNext: we set the "flag" <meta name="fc:frame" content="vNext"> and
+ *   additionally provide JSON config in <meta name="fc:frame:config"> so Warpcast
+ *   has the image, post_url and buttons without visiting /api/frame.
+ *
+ * NOTE: Using meta *name* is correct for the Mini App embed per docs.
+ * Warpcast accepts name="fc:frame" as flag + name="fc:frame:config" for config.
+ */
+const fcMiniApp = {
   version: '1',
   imageUrl: `${SITE}/miniapp-card.png`,
   button: {
@@ -21,14 +30,24 @@ const miniAppEmbed = {
     action: {
       type: 'launch_frame',
       name: 'FairPlay Vault',
-      url: `${SITE}/mini`,
+      url: `${SITE}/mini`,                 // the in-app URL to open
       splashImageUrl: `${SITE}/icon-192.png`,
       splashBackgroundColor: '#0b1220',
     },
   },
 }
 
-// Page metadata (adds Farcaster tags)
+const fcFrameConfig = {
+  image: `${SITE}/miniapp-card.png`,      // 1200x630/800 works
+  post_url: `${SITE}/api/frame?screen=home`,
+  buttons: [
+    { title: 'Open in App', action: 'post_redirect', target: `${SITE}/mini?from=frame&screen=home` },
+    { title: 'Browse Pools', action: 'post' },
+    { title: 'Create Pool', action: 'post' },
+  ],
+}
+
+// Page metadata (+ Farcaster tags)
 export const metadata: Metadata = {
   openGraph: {
     title: 'FairPlay Vault — Provably-fair USDC pools on Base',
@@ -41,18 +60,15 @@ export const metadata: Metadata = {
     images: [`${SITE}/miniapp-card.png`],
   },
   other: {
-    // Mini App embed (directory & cast card)
-    'fc:miniapp': JSON.stringify(miniAppEmbed),
+    // Mini App embed (JSON string)
+    'fc:miniapp': JSON.stringify(fcMiniApp),
     'fc:miniapp:domain': 'fairplay-vault.vercel.app',
 
-    // Lightweight Frame meta so casts resolve as a Frame too
+    // Frame vNext embed:
+    // Flag that this page has a vNext frame
     'fc:frame': 'vNext',
-    'fc:frame:image': `${SITE}/miniapp-card.png`,
-    'fc:frame:post_url': `${SITE}/api/frame?screen=home`,
-    'fc:frame:button:1': 'Open',
-    'fc:frame:button:1:action': 'post',
-    'fc:frame:button:2': 'Shuffle',
-    'fc:frame:button:2:action': 'post',
+    // Provide the config separately as JSON (Warpcast reads this)
+    'fc:frame:config': JSON.stringify(fcFrameConfig),
   },
 }
 
@@ -91,7 +107,6 @@ export default function Home() {
               aria-label="Open in Coinbase Wallet"
               title="Open in Coinbase Wallet"
             >
-              {/* Coinbase glyph (decorative) */}
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="h-4 w-4" aria-hidden="true">
                 <path fill="#0052FF" d="M24 4C12.954 4 4 12.954 4 24s8.954 20 20 20 20-8.954 20-20S35.046 4 24 4zm8 22h-6v6h-4v-6h-6v-4h6v-6h4v6h6v4z"/>
               </svg>
