@@ -8,21 +8,35 @@ import PoolList from '@/components/PoolList'
 export const dynamic = 'force-dynamic'
 
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://fairplay-vault.vercel.app').replace(/\/$/, '')
+const OG_IMAGE = `${SITE}/miniapp-card.png`
 
 // Coinbase Wallet deep link (opens your dapp directly)
 const CBW_DEEPLINK = `cbwallet://dapp?url=${encodeURIComponent(`${SITE}/`)}`
 
-// Page metadata (OG/Twitter only — Farcaster tags are in app/head.tsx)
+// Page metadata (OG/Twitter + Farcaster via `other`)
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE),
+  alternates: {
+    canonical: SITE,
+  },
   openGraph: {
     title: 'FairPlay Vault — Provably-fair USDC pools on Base',
     description: 'Create and join commit–reveal USDC pools on Base. Transparent, no VRF required.',
     url: SITE,
-    images: [{ url: `${SITE}/miniapp-card.png`, width: 1200, height: 630 }],
+    images: [{ url: OG_IMAGE, width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    images: [`${SITE}/miniapp-card.png`],
+    images: [OG_IMAGE],
+  },
+  // Farcaster frame meta tags
+  // These will render as <meta property="fc:..." content="..." />
+  other: {
+    'fc:frame': 'vNext',
+    'fc:frame:image': OG_IMAGE,
+    'fc:frame:button:1': 'Create a Round',
+    'fc:frame:button:1:action': 'link',
+    'fc:frame:button:1:target': SITE,
   },
 }
 
