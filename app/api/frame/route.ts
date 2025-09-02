@@ -1,7 +1,11 @@
 // app/api/frame/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 
-export const runtime = 'edge' // faster static HTML in Vercel
+export const runtime = 'edge'
+// ✅ ensure this route is never statically cached
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'default-no-store'
 
 // --- helpers ---------------------------------------------------------------
 function getBaseUrl(req: NextRequest) {
@@ -48,6 +52,7 @@ function htmlFor(opts: {
     })
     .join('\n    ')
 
+  // ✅ Put a tiny visible “Frame OK” so browsers don’t look blank.
   return `<!doctype html>
 <html>
   <head>
@@ -69,13 +74,18 @@ function htmlFor(opts: {
     <meta property="fc:frame:post_url" content="${postUrl}" />
     ${btnMeta}
   </head>
-  <body></body>
+  <body style="margin:0;padding:16px;background:#0b1220;color:#cbd5e1;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu">
+    <div style="display:inline-flex;align-items:center;gap:8px;border:1px solid #1f2937;background:#111827;padding:8px 10px;border-radius:10px;font-size:12px">
+      <span style="display:inline-block;width:8px;height:8px;background:#10b981;border-radius:999px"></span>
+      <strong>Frame OK</strong>
+      <span style="opacity:.7"> meta tags are present.</span>
+    </div>
+  </body>
 </html>`
 }
 
 // screen registry (title, image, web page)
 function screenConfig(baseUrl: string, screen: string, v: string) {
-  // If you haven't created /public/og/*.png, this fallback always exists:
   const card = `${baseUrl}/miniapp-card.png?v=${encodeURIComponent(v)}`
   const og = (name: string) => `${baseUrl}/og/${name}.png?v=${encodeURIComponent(v)}`
 
@@ -147,8 +157,18 @@ function routeButton(screen: string, buttonIndex: number) {
 }
 
 // --- handlers --------------------------------------------------------------
+function htmlResponse(body: string) {
+  // ✅ no-store so you always see fresh HTML in browsers while debugging
+  return new NextResponse(body, {
+    status: 200,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store, no-cache, must-revalidate',
+    },
+  })
+}
+
 export async function HEAD(req: NextRequest) {
-  // Some crawlers do a HEAD first; respond with same headers as GET
   const baseUrl = getBaseUrl(req)
   const search = req.nextUrl.searchParams
   const screen = sanitizeScreen(search.get('screen'))
@@ -159,13 +179,7 @@ export async function HEAD(req: NextRequest) {
   const buttons = buildButtons(baseUrl, screen, v)
 
   const body = htmlFor({ title, image, pageUrl, postUrl, buttons })
-  return new NextResponse(body, {
-    status: 200,
-    headers: {
-      'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'public, s-maxage=300, stale-while-revalidate=86400',
-    },
-  })
+  return htmlResponse(body)
 }
 
 export async function GET(req: NextRequest) {
@@ -179,13 +193,7 @@ export async function GET(req: NextRequest) {
   const buttons = buildButtons(baseUrl, screen, v)
 
   const body = htmlFor({ title, image, pageUrl, postUrl, buttons })
-  return new NextResponse(body, {
-    status: 200,
-    headers: {
-      'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'public, s-maxage=300, stale-while-revalidate=86400',
-    },
-  })
+  return htmlResponse(body)
 }
 
 export async function POST(req: NextRequest) {
@@ -205,11 +213,5 @@ export async function POST(req: NextRequest) {
   const buttons = buildButtons(baseUrl, nextScreen, v)
 
   const out = htmlFor({ title, image, pageUrl, postUrl, buttons })
-  return new NextResponse(out, {
-    status: 200,
-    headers: {
-      'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'public, s-maxage=300, stale-while-revalidate=86400',
-    },
-  })
+  return htmlResponse(out)
 }
