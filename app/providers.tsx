@@ -15,10 +15,10 @@ import { useEffect, useState } from 'react'
 
 const queryClient = new QueryClient()
 
-// Make sure env.rpcUrl points to a Base RPC (e.g. https://mainnet.base.org)
+// Make sure env.rpcUrl is a Base RPC (fallback provided)
 const config = getDefaultConfig({
   appName: 'FairPlay Vault',
-  projectId: env.wcProjectId || 'demo', // real WC v2 projectId recommended
+  projectId: env.wcProjectId || 'demo',
   chains: [base],
   transports: {
     [base.id]: http(env.rpcUrl || 'https://mainnet.base.org'),
@@ -30,7 +30,7 @@ const config = getDefaultConfig({
 function AutoSwitchToBase() {
   const { isConnected } = useAccount()
   const chainId = useChainId()
-  const { switchChain, isPending, error, reset } = useSwitchChain()
+  const { switchChainAsync, isPending, error, reset } = useSwitchChain()
   const [triedOnce, setTriedOnce] = useState(false)
 
   useEffect(() => {
@@ -42,12 +42,15 @@ function AutoSwitchToBase() {
     // If connected to the wrong chain, attempt a switch once.
     if (chainId && chainId !== base.id && !triedOnce && !isPending) {
       setTriedOnce(true)
-      // This will request `wallet_switchEthereumChain` (and add Base if needed)
-      switchChain({ chainId: base.id }).catch(() => {
-        // user may reject; we’ll show a small hint below
-      })
+      ;(async () => {
+        try {
+          await switchChainAsync({ chainId: base.id })
+        } catch {
+          // user may reject; we’ll show a small hint below
+        }
+      })()
     }
-  }, [isConnected, chainId, switchChain, triedOnce, isPending, reset])
+  }, [isConnected, chainId, switchChainAsync, triedOnce, isPending, reset])
 
   // Optional tiny hint if they canceled the switch
   if (isConnected && chainId !== base.id && error) {
@@ -66,11 +69,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        {/* initialChain helps RainbowKit pre-select Base in the connect modal */}
-        <RainbowKitProvider
-          initialChain={base}
-          theme={darkTheme({ accentColor: '#22D3EE' })}
-        >
+        <RainbowKitProvider initialChain={base} theme={darkTheme({ accentColor: '#22D3EE' })}>
           <AutoSwitchToBase />
           {children}
           <Toaster position="bottom-right" />
